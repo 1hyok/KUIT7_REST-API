@@ -6,6 +6,8 @@ target/
 # Gradle
 .gradle/
 *.jar
+# 단, Gradle Wrapper jar 은 반드시 커밋해야 함 (없으면 IntelliJ Gradle sync 실패 → '심볼 해결 불가' 에러 재발)
+!gradle/wrapper/gradle-wrapper.jar
 
 # IntelliJ
 .idea/

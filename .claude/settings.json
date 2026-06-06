@@ -1,0 +1,33 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.command // empty' | grep -Eq '(^|[^[:alnum:]])git[[:space:]]+([^;&|]*[[:space:]])?commit([[:space:]]|$)' && printf '%s' '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"커밋은 훅으로 차단돼 있어요. 변경이 필요하면 사용자가 직접 커밋하세요. (해제: .claude/settings.json 의 PreToolUse 훅 삭제)\"}}'; exit 0"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "printf '%s' '{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"[프로젝트 규칙] 사용자의 이번 메시지가 특정 코드(파일·클래스·메서드·특정 줄)의 동작이나 의미를 묻는 질문이면, 말로만 설명하지 말고 질문한 바로 그 코드 위치에 한국어 설명 주석을 추가하라. 기존 코드의 주석 스타일(줄 끝에 정렬된 한국어 설명)을 따르되 질문과 무관한 코드는 건드리지 마라. 개념만 묻는 일반 질문이거나 사용자가 수정하지 말라고 한 경우에는 주석을 달지 마라.\"}}'"
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "printf '%s' '{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"[근거·출처 규칙] Spring·JPA·Hibernate·Jakarta·Servlet·Tomcat·Java 등 기술적 판단을 할 때는 아래 공식 문서를 1차 근거로 삼아라. 기억이나 추측만으로 단정하지 말고, 버전에 민감하거나 불확실하면 해당 문서를 WebFetch 로 확인한 뒤 답하라. 그런 기술적 답변에는 근거가 된 문서를 아래 목록에서 골라(가능하면 구체적 섹션·키 이름과 함께) 출처로 밝히고, 목록 밖 내용이면 그렇다고 명시하라. 목록: Spring Boot 레퍼런스 https://docs.spring.io/spring-boot/reference/ · application.yml 설정 키 부록 https://docs.spring.io/spring-boot/appendix/application-properties/index.html · Spring Framework 레퍼런스 https://docs.spring.io/spring-framework/reference/ · Spring Data JPA 레퍼런스 https://docs.spring.io/spring-data/jpa/reference/ · Spring Security 레퍼런스 https://docs.spring.io/spring-security/reference/ · Hibernate ORM 7.4 https://hibernate.org/orm/documentation/7.4/ · Apache Tomcat 11 https://tomcat.apache.org/tomcat-11.0-doc/index.html · Jakarta Persistence 3.2 https://jakarta.ee/specifications/persistence/3.2/ · Jakarta Servlet 6.1 https://jakarta.ee/specifications/servlet/6.1/ · Java SE 25 API https://docs.oracle.com/en/java/javase/25/docs/api/\"}}'"
+          }
+        ]
+      }
+    ]
+  }
+}

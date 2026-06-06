@@ -1,0 +1,20 @@
+# 줄바꿈(EOL) 정규화 — 저장소엔 LF로 통일, Windows 스크립트만 CRLF 유지
+# (머신별 core.autocrlf 전역설정에 기대지 않고 협업자 전원 동일하게 동작)
+* text=auto eol=lf
+
+# Windows 배치 스크립트는 CRLF 유지
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Unix 셸 스크립트 / Gradle 래퍼는 LF
+*.sh  text eol=lf
+gradlew text eol=lf
+
+# 바이너리는 변환 제외
+*.jar  binary
+*.war  binary
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
