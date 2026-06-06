@@ -1,18 +1,29 @@
 spring:
   datasource:
+    # ${...} = 실행 환경의 환경변수(또는 IDE 실행설정의 Environment variables) 값을 끼워 넣는 자리.
+    # DB 접속 정보(주소/계정/비번)는 사람마다 다르고 노출되면 안 되므로 yml에 직접 쓰지 않고 환경변수로 분리.
     url: ${DATASOURCE_URL_LOCAL} #jdbc:mysql://localhost:3306/{본인이 저번주차에 생성했던 DB 이름}
     username: ${DATASOURCE_USERNAME} # 본인 DB username 환경변수에 저장
     password: ${DATASOURCE_PASSWORD} # 본인 DB 비밀번호 환경변수에 저장
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    # driver-class-name 생략: Spring Boot가 url의 jdbc:mysql:// 접두사로 드라이버 자동 판별
 
   jpa:
     hibernate:
-      ddl-auto: create   # 개발 중에는 create, 이후 validate로 변경
+      # ddl-auto = 앱 켤 때 Hibernate가 DB 테이블을 다루는 방식 (none=안 건드림 / validate=엔티티와 실제 테이블이 맞는지 검사 / create=새로 생성)
+      # none 인 이유: 테이블은 우리가 SQL(ERD 기준 baemin_schema.sql)로 직접 만들고, Hibernate는 만들지도 검사하지도 않게 함.
+      # ※ validate 로 바꾸면: 상태 컬럼이 DB엔 ENUM('active','inactive')인데 엔티티는 컨버터로 문자열(VARCHAR)로 매핑 →
+      #    둘의 타입이 안 맞아 시작 시 검증 실패로 앱이 아예 안 켜질 수 있음.
+      ddl-auto: none   # create → none
     show-sql: true
     properties:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.MySQLDialect
+        # LAZY 연관을 건마다 따로 조회하면 쿼리가 1+N번 나감(N+1 문제). 이 설정을 켜면 id들을 모아
+        # WHERE id IN (?,?,...) 으로 한 번에 묶어 조회 → 쿼리 수를 크게 줄인다.
+        default_batch_fetch_size: 100   # IN 절 하나에 최대 100개까지 묶어서 조회
+    # OSIV(Open Session In View). true(기본값)면 컨트롤러/뷰까지 영속성 컨텍스트가 살아있어 LAZY 조회가 가능하지만,
+    # 그만큼 DB 커넥션을 오래 잡는다. false면 트랜잭션(@Transactional, 보통 서비스 계층) 안에서만 LAZY 조회 가능.
     open-in-view: false
 
   data:
