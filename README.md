@@ -10,7 +10,7 @@ spring:
     url: ${DATASOURCE_URL_LOCAL}      # jdbc:mysql://localhost:3306/{생성한 DB 이름}
     username: ${DATASOURCE_USERNAME}  # 본인 DB username
     password: ${DATASOURCE_PASSWORD}  # 본인 DB 비밀번호
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    # driver-class-name 생략 — url의 jdbc:mysql:// 접두사로 Spring Boot가 자동 판별
 ```
 
 2. MySQL에서 DB 생성 (테이블 이름은 자유)
@@ -89,38 +89,115 @@ PR 본문에는 본인이 구현한 **10개 API 목록**을 아래 형식으로 
 
 ## 📖 코드 읽는 순서 (구조 이해용)
 
-처음 보는 사람이 이 프로젝트를 이해하기 좋은 순서입니다. 핵심 원리는 **공통 부품 → 데이터 클래스 → 기능 하나를 전 계층으로 → 같은 패턴 반복 → 공통 처리**. 한 기능이 `Controller → Service → Repository → Entity → DB`로 흐르는 걸 한 번 체득하면 나머지는 반복입니다.
+> 경로 기준: `src/main/java/com/kuit/baemin/` (설정 파일만 예외). 기능은 `Controller → 요청 DTO → Service → Repository → Entity → 응답 DTO` 순.
 
-### 0. 건너뛰기 (인프라)
-`build.gradle`, `gradlew*`, `.gitattributes` 등 — 코드 이해엔 불필요. (`build.gradle`만 의존성 확인용)
+### 0. 진입점
+1. `BaeminApplication.java`
 
-### 1. 설정 · 공통 부품
-1. `resources/application.yml` — DB 연결 · `ddl-auto`
-2. `test/resources/application.yml` — 테스트용 H2 인메모리
-3. `domain/BaseEntity` — 생성/수정 시각 공통 매핑
-4. `common/domain/ActiveStatus` → `ActiveStatusConverter` — enum ↔ DB 소문자 변환
-5. `common/dto/ApiResponse`, `SuccessStatus`, `dto/response/PageRes` — 응답 공통 포장 · 페이징
+### 1. 설정 · 공통
+1. `src/main/resources/application.yml`
+2. `src/test/resources/application.yml`
+3. `domain/BaseEntity.java`
+4. `common/domain/ActiveStatus.java`
+5. `common/domain/ActiveStatusConverter.java`
+6. `common/dto/ApiResponse.java`
+7. `common/dto/BaseCode.java`
+8. `common/dto/SuccessStatus.java`
+9. `dto/response/PageRes.java`
 
-### 2. 데이터 클래스 (엔티티 + enum/컨버터)
-필드와 연관관계(`@ManyToOne` / `@OneToMany`) 위주로. 의존 순서:
-`Member` → `Category` → `Restaurant` → `Menu` → `OptionGroup` → `MenuOption` → `Address` → `Order` → `OrderItem` → `OrderItemOption`
-(곁들여: `AddressType`, `OrderStatus`, `SelectionType` + 각 Converter)
+### 2. 엔티티 · enum · 컨버터
+1. `domain/member/Member.java`
+2. `domain/category/Category.java`
+3. `domain/Restaurant/Restaurant.java`
+4. `domain/menu/Menu.java`
+5. `domain/menu/OptionGroup.java`
+6. `domain/menu/MenuOption.java`
+7. `domain/menu/SelectionType.java`
+8. `domain/menu/SelectionTypeConverter.java`
+9. `domain/address/Address.java`
+10. `domain/address/AddressType.java`
+11. `domain/address/AddressTypeConverter.java`
+12. `domain/order/Order.java`
+13. `domain/order/OrderItem.java`
+14. `domain/order/OrderItemOption.java`
+15. `domain/order/OrderStatus.java`
+16. `domain/order/OrderStatusConverter.java`
 
-### 3. 기능 하나를 전 계층으로 — 가장 단순한 Category ⭐
-요청이 들어와 응답으로 나가는 흐름을 한 줄기로 따라가기:
-`CategoryController`(입구) → `CategoryCreateReq`(입력 · `@Valid`) → `CategoryService`(`@Transactional` · 로직) → `CategoryRepository`(DB) → `CategoryRes`(출력)
+### 3. Category
+1. `controller/CategoryController.java`
+2. `dto/request/CategoryCreateReq.java`
+3. `service/CategoryService.java`
+4. `repository/CategoryRepository.java`
+5. `dto/response/CategoryRes.java`
 
-### 4. 같은 패턴 반복 (난이도 순)
-각 묶음 모두 `Controller → 요청 DTO → Service → Repository → 응답 DTO` 구조:
-- **Member** — 회원가입/로그인 (중복 검사)
-- **Restaurant** — 페이징 + 카테고리 FK (`RestaurantDetailRes`)
-- **Menu** — `cascade`로 옵션 그룹·옵션 동시 저장
-- **Order** — 가장 복잡: 여러 FK + 항목/옵션 조립 + 가격 스냅샷
-- **Address** — 회원 주소 (복습용)
+### 4. 기능별 (난이도 순)
 
-### 5. 공통 예외 처리 · 문서
-- `exception/errorcode/ErrorStatus` → `GeneralException` + 도메인별 `*Exception` → `handler/GlobalExceptionHandler` — 예외가 일관된 JSON 에러로 변환되는 흐름
-- `config/SwaggerConfig` — API 문서 자동화
+**Member**
+1. `controller/MemberController.java`
+2. `dto/request/SignUpReq.java`
+3. `dto/request/LoginReq.java`
+4. `service/MemberService.java`
+5. `repository/MemberRepository.java`
+6. `domain/member/Member.java`
+7. `dto/response/MemberRes.java`
+
+**Restaurant**
+1. `controller/RestaurantController.java`
+2. `dto/request/RestaurantCreateReq.java`
+3. `service/RestaurantService.java`
+4. `repository/RestaurantRepository.java`
+5. `domain/Restaurant/Restaurant.java`
+6. `dto/response/RestaurantRes.java`
+7. `dto/response/RestaurantDetailRes.java`
+
+**Menu**
+1. `controller/MenuController.java`
+2. `dto/request/MenuCreateReq.java`
+3. `dto/request/OptionGroupReq.java`
+4. `dto/request/MenuOptionReq.java`
+5. `service/MenuService.java`
+6. `repository/MenuRepository.java`
+7. `repository/MenuOptionRepository.java`
+8. `domain/menu/Menu.java`
+9. `domain/menu/OptionGroup.java`
+10. `domain/menu/MenuOption.java`
+11. `dto/response/MenuRes.java`
+12. `dto/response/OptionGroupRes.java`
+13. `dto/response/MenuOptionRes.java`
+
+**Address**
+1. `controller/AddressController.java`
+2. `dto/request/AddressCreateReq.java`
+3. `service/AddressService.java`
+4. `repository/AddressRepository.java`
+5. `domain/address/Address.java`
+6. `dto/response/AddressRes.java`
+
+**Order**
+1. `controller/OrderController.java`
+2. `dto/request/OrderCreateReq.java`
+3. `dto/request/OrderItemReq.java`
+4. `dto/request/OrderStatusUpdateReq.java`
+5. `service/OrderService.java`
+6. `repository/OrderRepository.java`
+7. `domain/order/Order.java`
+8. `domain/order/OrderItem.java`
+9. `domain/order/OrderItemOption.java`
+10. `dto/response/OrderRes.java`
+11. `dto/response/OrderItemRes.java`
+12. `dto/response/OrderItemOptionRes.java`
+
+### 5. 예외 · 문서
+1. `exception/errorcode/ErrorStatus.java`
+2. `exception/GeneralException.java`
+3. `exception/MemberException.java`
+4. `exception/CategoryException.java`
+5. `exception/RestaurantException.java`
+6. `exception/MenuException.java`
+7. `exception/AddressException.java`
+8. `exception/OrderException.java`
+9. `exception/handler/GlobalExceptionHandler.java`
+10. `config/SwaggerConfig.java`
 
 ---
 
