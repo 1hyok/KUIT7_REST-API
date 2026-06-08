@@ -24,11 +24,7 @@ public class ApiResponse<T> {
     private T result;                  // 실제 응답 데이터(단건·목록 등)
 
     // ── 성공 응답 ──
-    public static <T> ApiResponse<T> onSuccess(T result) {   // 성공 코드/메시지를 채워 성공 응답 생성
-        return new ApiResponse<>(true, API_SUCCESS.getCode(), API_SUCCESS.getMessage(), result);
-    }
-
-    public static <T> ApiResponse<T> of(T result) {   // onSuccess와 동일한 짧은 별칭(컨트롤러에서 주로 사용)
+    public static <T> ApiResponse<T> of(T result) {   // 성공 코드/메시지를 채워 성공 응답 생성 (컨트롤러에서 ApiResponse.of(...)로 사용)
         return new ApiResponse<>(true, API_SUCCESS.getCode(), API_SUCCESS.getMessage(), result);
     }
 

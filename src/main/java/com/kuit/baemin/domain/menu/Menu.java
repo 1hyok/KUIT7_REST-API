@@ -2,7 +2,7 @@ package com.kuit.baemin.domain.menu;
 
 import com.kuit.baemin.common.domain.ActiveStatus;
 import com.kuit.baemin.domain.BaseEntity;
-import com.kuit.baemin.domain.Restaurant.Restaurant;
+import com.kuit.baemin.domain.restaurant.Restaurant;
 import jakarta.persistence.*;
 import lombok.*;
 
