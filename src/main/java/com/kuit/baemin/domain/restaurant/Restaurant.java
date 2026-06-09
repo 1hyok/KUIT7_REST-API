@@ -1,4 +1,4 @@
-package com.kuit.baemin.domain.Restaurant;
+package com.kuit.baemin.domain.restaurant;
 
 import com.kuit.baemin.common.domain.ActiveStatus;
 import com.kuit.baemin.domain.BaseEntity;
