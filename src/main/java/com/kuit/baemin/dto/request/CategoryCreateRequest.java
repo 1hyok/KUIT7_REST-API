@@ -13,7 +13,7 @@ import lombok.Getter;
  *   (@NotBlank 등은 Jakarta Validation 이 종류를 제공, 실제 검사는 Hibernate Validator 가 수행, @Valid 는 '실행하라' 스위치일 뿐)
  */
 @Getter
-public class CategoryCreateReq {
+public class CategoryCreateRequest {
 
     @NotBlank(message = "카테고리 이름은 필수입니다.")            // 값이 null/빈 문자열/공백만 있으면 실패(문자열 전용). message=실패 시 응답에 담길 안내문(미지정 시 기본 영어 메시지)
     @Size(max = 50, message = "카테고리 이름은 50자 이하여야 합니다.") // 길이 제한(문자열 글자 수). 최대 50자까지만 허용. message=실패 시 안내문
