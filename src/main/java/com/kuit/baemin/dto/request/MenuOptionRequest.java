@@ -19,6 +19,6 @@ public class MenuOptionRequest {
     @Size(max = 100, message = "옵션 이름은 100자 이하여야 합니다.")  // 글자 수 상한 검사 (최대 100자)
     private String name;
 
-    @PositiveOrZero(message = "옵션 추가 금액은 0 이상이어야 합니다.")  // 0 또는 양수만 허용 (음수 거부). 무료 옵션은 0원으로 표현
-    private int extraPrice;
+    @PositiveOrZero(message = "옵션 가격은 0 이상이어야 합니다.")  // 0 또는 양수만 허용 (음수 거부). 무료 옵션은 0원으로 표현
+    private int price;
 }

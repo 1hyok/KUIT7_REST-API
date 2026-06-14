@@ -65,7 +65,7 @@ public class MenuService {
                 // addOption: 양방향 연관관계 편의 메서드. group.options 에 넣고 option.group 도 함께 세팅
                 group.addOption(MenuOption.builder()
                         .name(optionReq.getName())
-                        .extraPrice(optionReq.getExtraPrice())    // 옵션 선택 시 추가 금액
+                        .price(optionReq.getPrice())    // 옵션 가격 (메뉴에 더해지는 금액)
                         .build());
             }
             // addOptionGroup: 메뉴-옵션그룹 양쪽을 연결하는 편의 메서드

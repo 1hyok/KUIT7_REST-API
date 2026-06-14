@@ -121,11 +121,14 @@ public class OrderService {
             throw new MenuException(MENU_OPTION_NOT_FOUND);
         }
         for (MenuOption option : options) {
-            // 옵션 → 옵션그룹 → 메뉴 로 거슬러 올라가, 이 옵션이 정말 이 메뉴에 속한 옵션인지 확인
+            // 이 옵션이 정말 '이 메뉴'의 옵션인지 확인 (옵션 → 옵션그룹 → 메뉴로 거슬러 올라가 메뉴 id 비교)
+            // 왜 필요? 클라이언트가 menuId와 optionIds를 '따로' 보내므로, "후라이드 주문 + 짜장면 옵션"처럼 엉뚱한 조합을 막아야 함.
+            //   위 개수검사(120줄)는 '옵션이 존재하나'만 보고, 이 검사는 '그 옵션이 이 메뉴 소속이냐'를 봄 — 둘은 막는 게 다름.
             if (!option.getOptionGroup().getMenu().getId().equals(menu.getId())) {
                 throw new MenuException(INVALID_MENU_OPTION);
             }
-            item.addOption(OrderItemOption.of(option));     // of(...): MenuOption 으로부터 주문용 OrderItemOption 을 만드는 정적 팩토리
+            item.addOption(OrderItemOption.of(option));     // of(...): MenuOption(메뉴 카탈로그) → OrderItemOption(주문 시점 스냅샷)으로 가격을 복사해 변환.
+            //   둘을 따로 두는 이유: 나중에 가게가 옵션 가격을 바꿔도, '과거 주문 금액'은 주문 당시 값(priceAtOrder)으로 그대로 보존하려고. MenuOption만 참조하면 과거 주문 금액이 소급해 바뀜
         }
         return item;
     }

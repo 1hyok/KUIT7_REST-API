@@ -40,7 +40,7 @@ public class Restaurant extends BaseEntity {         // BaseEntity 상속 → cr
     @Column(nullable = false, length = 255)
     private String address;
 
-    @Column(precision = 10, scale = 7)        // 위도/경도 같은 소수: 전체 10자리 중 소수점 아래 7자리
+    @Column(precision = 10, scale = 7)        // precision=소수점 빼고 숫자 총 10개, scale=그중 소수점 아래 7개 → 정수부는 10-7=3자리. 예: 37.5665000 (정수 2~3자리 + 소수 7자리)
     private BigDecimal latitude;              // BigDecimal = 오차 없는 정밀 소수 타입 (좌표·금액에 사용)
 
     @Column(precision = 10, scale = 7)

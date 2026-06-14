@@ -32,6 +32,6 @@ public class MenuOption extends BaseEntity {
     @Column(nullable = false, length = 100)              // NOT NULL, 최대 길이 100인 VARCHAR 컬럼
     private String name;
 
-    @Column(name = "extra_price", nullable = false)      // 추가 금액 컬럼. 이 옵션을 고르면 더 붙는 가격 (0이면 무료 옵션)
-    private int extraPrice;
+    @Column(name = "extra_price", nullable = false)      // 옵션 가격(메뉴 가격에 더해지는 금액, 0이면 무료). DB 컬럼명은 기존 extra_price 그대로 유지(스키마 안 깨지게)
+    private int price;
 }

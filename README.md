@@ -79,7 +79,7 @@ PR 본문에는 본인이 구현한 **10개 API 목록**을 아래 형식으로 
 
 ### 기타 특이사항
 - **ERD 전체 반영**: `category, restaurant, menu, option_group, menu_option, address, orders, order_item, order_item_option` 9개 도메인을 JPA 엔티티 + 연관관계(`@ManyToOne` / `@OneToMany`)로 매핑했습니다. (`user`는 제공된 참고용 `Member`로 대체)
-- **페이징**: 목록 조회 4종에 Spring Data `Pageable`을 적용하고, 응답은 공통 `PageRes`로 일관되게 반환합니다.
+- **페이징**: 목록 조회 4종에 Spring Data `Pageable`을 적용하고, 응답은 공통 `PageResponse`로 일관되게 반환합니다.
 - **주문 로직**: 주문 생성 시 메뉴/옵션 가격을 스냅샷(`price_at_order`)으로 저장하고, 최소 주문 금액을 검증하며, `(메뉴+옵션 합계) + 배달비`로 총액을 계산합니다. `cascade`로 `order_item` / `order_item_option`을 함께 저장합니다.
 - **상태/예외 처리**: 소프트 삭제용 공통 `ActiveStatus`, 주문 진행 상태 `OrderStatus`를 사용하고, 도메인별 예외와 `ErrorStatus`로 표준 에러 응답(HTTP 상태코드 반영)을 제공합니다.
 - **N+1 완화**: `hibernate.default_batch_fetch_size` 설정으로 지연 로딩 시 IN 절 배치 조회를 적용했습니다.
@@ -89,7 +89,7 @@ PR 본문에는 본인이 구현한 **10개 API 목록**을 아래 형식으로 
 
 ## 📖 코드 읽는 순서 (구조 이해용)
 
-> 경로 기준: `src/main/java/com/kuit/baemin/` (설정 파일만 예외). 기능은 `Controller → 요청 DTO → Service → Repository → Entity → 응답 DTO` 순.
+> 경로 기준: `src/main/java/com/kuit/baemin/` (설정 파일만 예외). **도메인·요청 DTO·컨트롤러·서비스·레포지토리·응답 DTO(`domain/*`, `dto/request/*`, `controller/*`, `service/*`, `repository/*`, `dto/response/*`)를 계층별로 한 번에 모아 읽는다(아래 2~7번).**
 
 ### 0. 진입점
 1. `BaeminApplication.java`
@@ -97,97 +97,114 @@ PR 본문에는 본인이 구현한 **10개 API 목록**을 아래 형식으로 
 ### 1. 설정 · 공통
 1. `src/main/resources/application.yml`
 2. `src/test/resources/application.yml`
-3. `domain/BaseEntity.java`
-4. `common/domain/ActiveStatus.java`
-5. `common/domain/ActiveStatusConverter.java`
-6. `common/dto/ApiResponse.java`
-7. `common/dto/BaseCode.java`
-8. `common/dto/SuccessStatus.java`
-9. `dto/response/PageRes.java`
+3. `common/domain/ActiveStatus.java`
+4. `common/domain/ActiveStatusConverter.java`
+5. `common/dto/ApiResponse.java`
+6. `common/dto/BaseCode.java`
+7. `common/dto/SuccessStatus.java`
+8. `dto/response/PageResponse.java`
 
-### 2. 엔티티 · enum · 컨버터
-1. `domain/member/Member.java`
-2. `domain/category/Category.java`
-3. `domain/Restaurant/Restaurant.java`
-4. `domain/menu/Menu.java`
-5. `domain/menu/OptionGroup.java`
-6. `domain/menu/MenuOption.java`
-7. `domain/menu/SelectionType.java`
-8. `domain/menu/SelectionTypeConverter.java`
-9. `domain/address/Address.java`
-10. `domain/address/AddressType.java`
-11. `domain/address/AddressTypeConverter.java`
-12. `domain/order/Order.java`
-13. `domain/order/OrderItem.java`
-14. `domain/order/OrderItemOption.java`
-15. `domain/order/OrderStatus.java`
-16. `domain/order/OrderStatusConverter.java`
+### 2. 도메인 (한 번에 모아 읽기)
+> `domain/*` 패키지의 엔티티·enum·컨버터·공통 부모(BaseEntity)를 한 번에. (DB 테이블 모델이라 먼저 보면 전체 구조가 잡힘)
+1. `domain/BaseEntity.java`
+2. `domain/member/Member.java`
+3. `domain/category/Category.java`
+4. `domain/Restaurant/Restaurant.java`
+5. `domain/menu/Menu.java`
+6. `domain/menu/OptionGroup.java`
+7. `domain/menu/MenuOption.java`
+8. `domain/menu/SelectionType.java`
+9. `domain/menu/SelectionTypeConverter.java`
+10. `domain/address/Address.java`
+11. `domain/address/AddressType.java`
+12. `domain/address/AddressTypeConverter.java`
+13. `domain/order/Order.java`
+14. `domain/order/OrderItem.java`
+15. `domain/order/OrderItemOption.java`
+16. `domain/order/OrderStatus.java`
+17. `domain/order/OrderStatusConverter.java`
 
-### 3. Category
-1. `controller/CategoryController.java`
-2. `dto/request/CategoryCreateReq.java`
-3. `service/CategoryService.java`
-4. `repository/CategoryRepository.java`
-5. `dto/response/CategoryRes.java`
-
-### 4. 기능별 (난이도 순)
+### 3. 요청 DTO (한 번에 모아 읽기)
+> 검증 어노테이션(`@NotBlank`/`@NotNull`/`@Valid` 등) 패턴이 비슷해, 도메인별로 흩지 않고 한 번에 읽는다.
 
 **Member**
-1. `controller/MemberController.java`
-2. `dto/request/SignUpReq.java`
-3. `dto/request/LoginReq.java`
-4. `service/MemberService.java`
-5. `repository/MemberRepository.java`
-6. `domain/member/Member.java`
-7. `dto/response/MemberRes.java`
+1. `dto/request/SignUpRequest.java`
+2. `dto/request/LoginRequest.java`
 
 **Restaurant**
-1. `controller/RestaurantController.java`
-2. `dto/request/RestaurantCreateReq.java`
-3. `service/RestaurantService.java`
-4. `repository/RestaurantRepository.java`
-5. `domain/Restaurant/Restaurant.java`
-6. `dto/response/RestaurantRes.java`
-7. `dto/response/RestaurantDetailRes.java`
+3. `dto/request/RestaurantCreateRequest.java`
+
+**Category**
+4. `dto/request/CategoryCreateRequest.java`
 
 **Menu**
-1. `controller/MenuController.java`
-2. `dto/request/MenuCreateReq.java`
-3. `dto/request/OptionGroupReq.java`
-4. `dto/request/MenuOptionReq.java`
-5. `service/MenuService.java`
-6. `repository/MenuRepository.java`
-7. `repository/MenuOptionRepository.java`
-8. `domain/menu/Menu.java`
-9. `domain/menu/OptionGroup.java`
-10. `domain/menu/MenuOption.java`
-11. `dto/response/MenuRes.java`
-12. `dto/response/OptionGroupRes.java`
-13. `dto/response/MenuOptionRes.java`
+5. `dto/request/MenuCreateRequest.java`
+6. `dto/request/OptionGroupRequest.java`
+7. `dto/request/MenuOptionRequest.java`
 
 **Address**
-1. `controller/AddressController.java`
-2. `dto/request/AddressCreateReq.java`
-3. `service/AddressService.java`
-4. `repository/AddressRepository.java`
-5. `domain/address/Address.java`
-6. `dto/response/AddressRes.java`
+8. `dto/request/AddressCreateRequest.java`
 
 **Order**
-1. `controller/OrderController.java`
-2. `dto/request/OrderCreateReq.java`
-3. `dto/request/OrderItemReq.java`
-4. `dto/request/OrderStatusUpdateReq.java`
-5. `service/OrderService.java`
-6. `repository/OrderRepository.java`
-7. `domain/order/Order.java`
-8. `domain/order/OrderItem.java`
-9. `domain/order/OrderItemOption.java`
-10. `dto/response/OrderRes.java`
-11. `dto/response/OrderItemRes.java`
-12. `dto/response/OrderItemOptionRes.java`
+9. `dto/request/OrderCreateRequest.java`
+10. `dto/request/OrderItemRequest.java`
+11. `dto/request/OrderStatusUpdateRequest.java`
 
-### 5. 예외 · 문서
+### 4. 컨트롤러 (한 번에 모아 읽기)
+> 컨트롤러는 요청을 받아 Service에 위임만 하는 얇은 입구라, 한 번에 훑으면 전체 API 윤곽이 잡힌다.
+1. `controller/CategoryController.java`
+2. `controller/MemberController.java`
+3. `controller/RestaurantController.java`
+4. `controller/MenuController.java`
+5. `controller/AddressController.java`
+6. `controller/OrderController.java`
+
+### 5. 서비스 (한 번에 모아 읽기)
+> 서비스는 비즈니스 로직 본체라, 한 번에 보면 전체 처리 흐름이 잡힌다.
+1. `service/CategoryService.java`
+2. `service/MemberService.java`
+3. `service/RestaurantService.java`
+4. `service/MenuService.java`
+5. `service/AddressService.java`
+6. `service/OrderService.java`
+
+### 6. 레포지토리 (한 번에 모아 읽기)
+> 레포지토리는 인터페이스 선언만 있고 구현은 Spring Data JPA가 런타임에 자동 생성. 파생 쿼리·`@EntityGraph` 위주라 한 번에 훑기 좋다.
+1. `repository/CategoryRepository.java`
+2. `repository/MemberRepository.java`
+3. `repository/RestaurantRepository.java`
+4. `repository/MenuRepository.java`
+5. `repository/MenuOptionRepository.java`
+6. `repository/AddressRepository.java`
+7. `repository/OrderRepository.java`
+
+### 7. 응답 DTO (한 번에 모아 읽기)
+> 엔티티 → 화면에 필요한 값만 골라 담는 응답 DTO를 한 번에. (도메인별로 묶어 정리)
+
+**Category**
+1. `dto/response/CategoryResponse.java`
+
+**Member**
+2. `dto/response/MemberResponse.java`
+
+**Restaurant**
+3. `dto/response/RestaurantResponse.java`
+4. `dto/response/RestaurantDetailResponse.java`
+
+**Menu**
+5. `dto/response/MenuResponse.java`
+6. `dto/response/OptionGroupResponse.java`
+7. `dto/response/MenuOptionResponse.java`
+
+**Address**
+8. `dto/response/AddressResponse.java`
+
+**Order**
+9. `dto/response/OrderResponse.java`
+10. `dto/response/OrderItemResponse.java`
+11. `dto/response/OrderItemOptionResponse.java`
+
+### 8. 예외 · 문서
 1. `exception/errorcode/ErrorStatus.java`
 2. `exception/GeneralException.java`
 3. `exception/MemberException.java`

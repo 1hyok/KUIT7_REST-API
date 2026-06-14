@@ -47,13 +47,13 @@ public class OrderItemOption extends BaseEntity {
 
     /**
      * 정적 팩토리 메서드: 고른 메뉴 옵션(MenuOption)으로 주문 옵션 한 줄을 만든다.
-     * 이때 옵션의 현재 추가금(extraPrice)을 priceAtOrder 로 복사해 "주문 시점 가격"을 고정한다.
+     * 이때 옵션의 현재 가격(price)을 priceAtOrder 로 복사해 "주문 시점 가격"을 고정한다.
      * (orderItem 은 아직 비어 있고, 나중에 OrderItem.addOption 으로 연결된다)
      */
     public static OrderItemOption of(MenuOption menuOption) {
         return OrderItemOption.builder()
                 .menuOption(menuOption)
-                .priceAtOrder(menuOption.getExtraPrice())  // 주문 그 순간의 옵션 추가금을 스냅샷으로 저장
+                .priceAtOrder(menuOption.getPrice())  // 주문 그 순간의 옵션 가격을 스냅샷으로 저장
                 .build();
     }
 }

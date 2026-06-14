@@ -11,13 +11,13 @@ import lombok.Getter;
  * 엔티티(MenuOption)를 API 응답으로 그대로 노출하면 DB 구조나 불필요한 연관관계까지 새어 나가므로,
  * 화면에 꼭 필요한 값(id/이름/추가금액)만 골라 담은 이 DTO로 변환해서 응답한다.
  */
-@Getter                                   // Lombok: 각 필드의 getter(getId/getName/getExtraPrice)를 컴파일 시 자동 생성. JSON 직렬화 시 이 getter들이 사용됨
+@Getter                                   // Lombok: 각 필드의 getter(getId/getName/getPrice)를 컴파일 시 자동 생성. JSON 직렬화 시 이 getter들이 사용됨
 @Builder                                  // Lombok: 빌더 패턴 생성. 아래 from()에서 .id().name()... 처럼 필드를 골라 객체를 조립할 수 있게 함
 public class MenuOptionResponse {
 
     private Long id;
     private String name;
-    private int extraPrice;               // 옵션 선택 시 추가되는 금액
+    private int price;                    // 옵션 가격 (메뉴에 더해지는 금액)
 
     /**
      * 엔티티(MenuOption) -> 응답 DTO(MenuOptionResponse) 변환용 정적 팩토리 메서드.
@@ -27,7 +27,7 @@ public class MenuOptionResponse {
         return MenuOptionResponse.builder()    // @Builder가 만들어 준 빌더로 필요한 필드만 채워서 객체 생성
                 .id(option.getId())
                 .name(option.getName())
-                .extraPrice(option.getExtraPrice())
+                .price(option.getPrice())
                 .build();
     }
 }

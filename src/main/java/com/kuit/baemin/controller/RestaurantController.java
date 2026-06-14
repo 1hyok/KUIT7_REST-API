@@ -32,9 +32,10 @@ public class RestaurantController {
     @Operation(summary = "가게 목록 조회 (페이징, categoryId로 카테고리 필터링)")
     @GetMapping                         // HTTP GET /restaurants (보통 '조회'에 사용)
     public ApiResponse<PageResponse<RestaurantResponse>> list(
-            @RequestParam(required = false) Long categoryId,   // 쿼리 파라미터: /restaurants?categoryId=1 의 값. required=false라 없어도 됨
+            @RequestParam(required = false) Long categoryId,   // 쿼리 파라미터 중 하나. categoryId는 @RequestParam으로 직접 받음 (없어도 됨)
             @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable) {
-            // @PageableDefault : page·size·sort 같은 페이징 정보를 자동으로 받아 줌. 기본값은 한 페이지 10개, id 내림차순(최신순)
+            // page·size·sort도 '같은 쿼리스트링'에 함께 들어옴 → 이건 @RequestParam 없이 Pageable이 자동으로 집어감
+            // 즉 실제 요청은 둘이 &로 같이 옴: /restaurants?categoryId=1&page=0&size=10&sort=id,desc  (없으면 위 기본값)
         return ApiResponse.of(restaurantService.list(categoryId, pageable));
     }
 
