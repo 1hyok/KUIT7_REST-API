@@ -1,9 +1,9 @@
 package com.kuit.baemin.controller;
 
 import com.kuit.baemin.common.dto.ApiResponse;
-import com.kuit.baemin.dto.request.LoginReq;
-import com.kuit.baemin.dto.request.SignUpReq;
-import com.kuit.baemin.dto.response.MemberRes;
+import com.kuit.baemin.dto.request.LoginRequest;
+import com.kuit.baemin.dto.request.SignUpRequest;
+import com.kuit.baemin.dto.response.MemberResponse;
 import com.kuit.baemin.service.MemberService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -30,17 +30,17 @@ import org.springframework.web.bind.annotation.*;
  *  8주차 커리큘럼(인증, 인가, JWT)을 학습한 후 직접 추가해보세요!
  */
 @RestController
-@RequestMapping("/members")
+@RequestMapping("/members")      // 이 컨트롤러 모든 API의 공통 URL 접두사
 @RequiredArgsConstructor
 public class MemberController {
 
-    private final MemberService memberService;
+    private final MemberService memberService;   // 실제 회원 로직 담당 서비스
 
     /**
      * POST /members — 회원 가입
      */
     @PostMapping
-    public ApiResponse<Long> signUp(@Valid @RequestBody SignUpReq req) {
+    public ApiResponse<Long> signUp(@Valid @RequestBody SignUpRequest req) {
         return ApiResponse.of(memberService.signUp(req));
     }
 
@@ -48,7 +48,7 @@ public class MemberController {
      * POST /members/login — 로그인
      */
     @PostMapping("/login")
-    public ApiResponse<Long> login(@Valid @RequestBody LoginReq req) {
+    public ApiResponse<Long> login(@Valid @RequestBody LoginRequest req) {
         return ApiResponse.of(memberService.login(req));
     }
 
@@ -56,7 +56,7 @@ public class MemberController {
      * GET /members/{memberId} — 회원 단건 조회
      */
     @GetMapping("/{memberId}")
-    public ApiResponse<MemberRes> getMember(@PathVariable Long memberId) {
+    public ApiResponse<MemberResponse> getMember(@PathVariable Long memberId) {
         return ApiResponse.of(memberService.getMember(memberId));
     }
 }

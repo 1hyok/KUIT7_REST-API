@@ -1,11 +1,11 @@
 package com.kuit.baemin.common.dto;
 
-import static com.kuit.baemin.common.dto.SuccessStatus.API_SUCCESS;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+
+import static com.kuit.baemin.common.dto.SuccessStatus.API_SUCCESS;
 
 /**
  * 모든 API 응답을 동일한 형태로 감싸는 공통 "봉투". <T> = 실제 데이터(result)의 타입.
@@ -24,7 +24,7 @@ public class ApiResponse<T> {
     private T result;                  // 실제 응답 데이터(단건·목록 등)
 
     // ── 성공 응답 ──
-    public static <T> ApiResponse<T> of(T result) {   // 성공 코드/메시지를 채워 성공 응답 생성 (컨트롤러에서 ApiResponse.of(...)로 사용)
+    public static <T> ApiResponse<T> of(T result) {   // of = 정적 팩토리 메서드 관례(List.of/Optional.of 처럼 "주어진 값으로 인스턴스 생성"). 여기선 성공 코드/메시지를 채운 성공 응답을 만듦
         return new ApiResponse<>(true, API_SUCCESS.getCode(), API_SUCCESS.getMessage(), result);
     }
 

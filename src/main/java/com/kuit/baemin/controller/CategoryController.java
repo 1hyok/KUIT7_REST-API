@@ -1,9 +1,9 @@
 package com.kuit.baemin.controller;
 
 import com.kuit.baemin.common.dto.ApiResponse;
-import com.kuit.baemin.dto.request.CategoryCreateReq;
-import com.kuit.baemin.dto.response.CategoryRes;
-import com.kuit.baemin.dto.response.PageRes;
+import com.kuit.baemin.dto.request.CategoryCreateRequest;
+import com.kuit.baemin.dto.response.CategoryResponse;
+import com.kuit.baemin.dto.response.PageResponse;
 import com.kuit.baemin.service.CategoryService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -29,17 +29,17 @@ public class CategoryController {
 
     @Operation(summary = "카테고리 생성")   // (Swagger/OpenAPI) 이 메서드(엔드포인트) 하나에 대한 설명. summary = Swagger UI 에서 POST /categories 옆에 뜨는 한 줄 제목. 문서 표시용일 뿐 동작엔 영향 없음
     @PostMapping                          // 'HTTP POST + /categories' 요청을 이 메서드에 연결. @RequestMapping(method=POST)의 단축형. POST=새 데이터 '생성' 용도 (경로 생략 → 클래스의 /categories 그대로)
-    public ApiResponse<Long> create(@Valid @RequestBody CategoryCreateReq req) {
-        // @RequestBody : 요청 본문(JSON)을 CategoryCreateReq 객체로 자동 변환
+    public ApiResponse<Long> create(@Valid @RequestBody CategoryCreateRequest req) {
+        // @RequestBody : 요청 본문(JSON)을 CategoryCreateRequest 객체로 자동 변환
         // @Valid       : 그 객체의 검증 규칙(@NotBlank 등)을 자동 검사 → 위반 시 400 에러
         return ApiResponse.of(categoryService.create(req));   // ApiResponse = 우리 프로젝트 공통 응답 포맷(성공/코드/결과). 결과로 생성된 카테고리 id 반환
     }
 
     @Operation(summary = "카테고리 목록 조회 (페이징)")
     @GetMapping                           // 'HTTP GET + /categories' 요청을 이 메서드에 연결. @RequestMapping(method=GET)의 단축형. GET=데이터 '조회'(읽기) 용도
-    public ApiResponse<PageRes<CategoryRes>> list(   // 반환 타입(안→밖): CategoryRes(카테고리 1건) → PageRes(그 카테고리들의 한 페이지+페이징정보) → ApiResponse(공통 응답 봉투)
+    public ApiResponse<PageResponse<CategoryResponse>> list(   // 반환 타입(안→밖): CategoryResponse(카테고리 1건) → PageResponse(그 카테고리들의 한 페이지+페이징정보) → ApiResponse(공통 응답 봉투)
             @PageableDefault(size = 20, sort = "name", direction = Sort.Direction.ASC) Pageable pageable) {
             // @PageableDefault : page·size·sort 같은 페이징 정보를 자동으로 받아 줌. 기본값은 한 페이지 20개, name(이름) 오름차순(가나다순)
-        return ApiResponse.of(categoryService.list(pageable));   // PageRes = 페이지 결과(목록 + 전체 개수·페이지 정보)를 담는 공통 포맷
+        return ApiResponse.of(categoryService.list(pageable));   // PageResponse = 페이지 결과(목록 + 전체 개수·페이지 정보)를 담는 공통 포맷
     }
 }
