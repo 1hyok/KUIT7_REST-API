@@ -20,9 +20,9 @@ import org.springframework.web.bind.annotation.*;
  * (로직은 직접 안 하고 Service에 위임하는 게 원칙 — 입구는 얇게 유지)
  */
 @Tag(name = "Category", description = "음식 카테고리 API")   // (Swagger/OpenAPI) Swagger UI 화면에서 이 컨트롤러의 API들을 'Category' 라는 접이식 섹션 하나로 모아 보여줌(name=섹션 제목, description=그 밑 설명). 문서 표시용일 뿐 동작엔 영향 없음
-@RestController                                            // 'REST 컨트롤러' 등록 → 메서드 반환값이 자동으로 JSON 응답 본문이 됨
+@RestController                                            // = @Controller(웹 요청 받는 빈으로 등록) + @ResponseBody(반환값을 '뷰 이름'이 아니라 'HTTP 응답 본문'에 직접 씀). 그래서 메서드가 돌려준 객체가 자동으로 JSON 본문이 됨 → REST API용
 @RequestMapping("/categories")                            // 클래스 레벨 기본 경로. 메서드의 @PostMapping/@GetMapping("/{id}") 경로가 이 뒤에 붙음 → /categories, /categories/{id} ...
-@RequiredArgsConstructor                                  // (Lombok) final 필드만 받는 생성자를 자동 생성. 생성자가 이거 하나뿐이라 Spring 이 @Autowired 없이도 이 생성자로 CategoryService 빈을 주입(생성자 주입)
+@RequiredArgsConstructor                                  // (Lombok) 'Required(꼭 채워야 하는)' 필드 = final(아직 값 없는) + @NonNull 필드 -> 그것들을 받는 생성자를 자동 생성. 여기선 categoryService 하나. 생성자가 이거 하나뿐이라 Spring 이 @Autowired 없이도 이 생성자로 CategoryService 빈을 주입(생성자 주입)
 public class CategoryController {
 
     private final CategoryService categoryService;   // 실제 처리는 이 서비스에 맡김 (생성자로 자동 주입)

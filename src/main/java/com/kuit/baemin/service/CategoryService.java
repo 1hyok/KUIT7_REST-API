@@ -21,7 +21,7 @@ import static com.kuit.baemin.exception.errorcode.ErrorStatus.DUPLICATE_CATEGORY
  */
 @Service                            // 이 클래스를 스프링이 관리하는 Service 빈으로 등록 (다른 곳에서 주입받아 사용 가능)
 @RequiredArgsConstructor            // final 필드만 받는 생성자를 자동 생성 -> 스프링이 그 생성자로 의존성 주입(DI)
-@Transactional(readOnly = true)     // 클래스 전체 기본값: 읽기 전용 트랜잭션. 조회만 하는 메서드의 성능에 유리
+@Transactional(readOnly = true)     // @Transactional = 메서드를 '트랜잭션'(여러 DB작업을 한 묶음)으로 실행: 정상 종료면 commit(확정), 예외면 rollback(전부 취소). readOnly=true=읽기 전용(조회만 하는 메서드 성능에 유리). 클래스에 붙이면 모든 메서드의 기본값
 public class CategoryService {
 
     private final CategoryRepository categoryRepository;    // DB 접근 담당. final + 위 어노테이션으로 생성자 주입됨

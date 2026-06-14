@@ -47,6 +47,8 @@ public class MemberService {
                 .build();
 
 
+        // save()는 MemberRepository에 우리가 안 적었음 — JpaRepository를 상속해 '물려받은' 메서드(인터페이스라 선언만 존재).
+        // 실제 구현 코드는 Spring Data JPA가 런타임에 만든 프록시(SimpleJpaRepository)가 제공 → 내부에서 EntityManager.persist 호출 → INSERT.
         Member saved = memberRepository.save(member);   // DB에 INSERT 실행 → PK(id)가 채워진 엔티티를 돌려받음
         return saved.getId();                            // 새로 발급된 회원 id 반환
     }
@@ -72,8 +74,8 @@ public class MemberService {
      * 회원 단건 조회: id로 회원을 찾아 응답 DTO로 변환해 돌려준다.
      */
     public MemberResponse getMember(Long memberId) {
-        Member member = memberRepository.findById(memberId)              // JpaRepository 기본 제공 메서드 (PK로 조회)
-                .orElseThrow(() -> new MemberException(MEMBER_NOT_FOUND));   // 없으면 예외
+        Member member = memberRepository.findById(memberId)              // JpaRepository 기본 제공 메서드 → Optional<Member> 반환 (있을 수도/없을 수도)
+                .orElseThrow(() -> new MemberException(MEMBER_NOT_FOUND));   // orElseThrow: 값이 있으면 그 Member를 꺼내 반환, 비어 있으면(Optional empty) 람다가 만든 예외를 던짐
         return MemberResponse.from(member);   // 엔티티 → 응답 DTO 변환 (password 등 민감 필드는 빼고 내려보냄)
     }
 }

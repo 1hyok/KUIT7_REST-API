@@ -55,8 +55,8 @@ public class MemberController {
     /**
      * GET /members/{memberId} — 회원 단건 조회
      */
-    @GetMapping("/{memberId}")
-    public ApiResponse<MemberResponse> getMember(@PathVariable Long memberId) {
+    @GetMapping("/{memberId}")   // 경로의 {memberId} = 경로 변수(placeholder). URL마다 값이 바뀌는 '빈칸'. /members/7 이면 7, /members/42 면 42가 그 자리에 들어옴
+    public ApiResponse<MemberResponse> getMember(@PathVariable Long memberId) {   // @PathVariable: 그 {memberId} 빈칸의 실제 값을 꺼내 파라미터 memberId(Long)로 받음 (이름이 같아서 자동 매칭)
         return ApiResponse.of(memberService.getMember(memberId));
     }
 }
