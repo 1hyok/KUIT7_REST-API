@@ -1,5 +1,6 @@
 package com.kuit.baemin.controller;
 
+import com.kuit.baemin.auth.AuthPrincipal;
 import com.kuit.baemin.common.dto.ApiResponse;
 import com.kuit.baemin.dto.request.RestaurantCreateRequest;
 import com.kuit.baemin.dto.response.PageResponse;
@@ -13,6 +14,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 @Tag(name = "Restaurant", description = "가게 API")   // (Swagger 문서) 이 컨트롤러의 API들을 'Restaurant' 그룹으로 묶음
@@ -23,10 +26,11 @@ public class RestaurantController {
 
     private final RestaurantService restaurantService;
 
-    @Operation(summary = "가게 등록")   // (Swagger) 이 API의 한 줄 설명
+    @Operation(summary = "가게 등록 (OWNER/ADMIN, 등록자가 점주가 됨)")   // (Swagger) 이 API의 한 줄 설명
     @PostMapping                        // HTTP POST /restaurants 요청을 이 메서드가 처리 (보통 '생성'에 사용)
-    public ApiResponse<Long> create(@Valid @RequestBody RestaurantCreateRequest req) {
-        return ApiResponse.of(restaurantService.create(req));   // ApiResponse = 우리 프로젝트 공통 응답 포맷(성공/코드/결과)
+    public ApiResponse<Long> create(@AuthenticationPrincipal Jwt jwt,   // 검증된 토큰. 등록자(=점주)를 sub에서 꺼냄
+                                    @Valid @RequestBody RestaurantCreateRequest req) {
+        return ApiResponse.of(restaurantService.create(AuthPrincipal.memberId(jwt), req));   // 등록자 id를 주인으로
     }
 
     @Operation(summary = "가게 목록 조회 (페이징, categoryId로 카테고리 필터링)")

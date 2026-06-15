@@ -16,9 +16,7 @@ import java.util.List;
 @Getter                                              // Lombok이 각 필드의 getter를 생성. 서비스 등에서 값을 꺼내 읽을 때 사용 (요청 JSON→객체 변환은 Spring의 Jackson이 담당)
 public class OrderCreateRequest {
 
-    // 인증 미구현 단계라 주문자 memberId를 요청 본문으로 받음 (8주차에서 토큰 기반으로 대체)
-    @NotNull(message = "회원 ID는 필수입니다.")          // null이면 검증 실패 (값 자체가 있어야 함)
-    private Long memberId;
+    // 주문자(memberId)는 요청 본문이 아니라 인증 토큰(@AuthenticationPrincipal Jwt의 sub)에서 가져온다 → 본문으로 받지 않음(사칭 방지)
 
     @NotNull(message = "가게 ID는 필수입니다.")
     private Long restaurantId;

@@ -18,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import static com.kuit.baemin.exception.errorcode.ErrorStatus.RESTAURANT_FORBIDDEN;
 import static com.kuit.baemin.exception.errorcode.ErrorStatus.RESTAURANT_NOT_FOUND;
 
 /**
@@ -39,10 +40,18 @@ public class MenuService {
      * Menu 하나에 OptionGroup 여러 개, 그 안에 MenuOption 여러 개가 매달린 구조를 한 번에 저장한다.
      */
     @Transactional
-    public Long create(Long restaurantId, MenuCreateRequest req) {
+    public Long create(Long restaurantId, MenuCreateRequest req, Long actorMemberId, boolean isAdmin) {
         // 메뉴를 달 가게를 먼저 조회. 없으면 orElseThrow 로 예외를 던져 흐름 중단 (전역 예외 처리로 에러 응답 변환)
         Restaurant restaurant = restaurantRepository.findById(restaurantId)
                 .orElseThrow(() -> new RestaurantException(RESTAURANT_NOT_FOUND));
+
+        // 인가: 관리자(ADMIN)이거나 이 가게의 주인(점주)이면 허용하고, 둘 다 아니면 차단한다.
+        //   - 관리자는 남의 가게여도 전부 허용하는 우회 권한
+        //   - isOwnedBy 는 이 가게의 주인이 호출자인지 검사
+        //   허용 조건이 "관리자 또는 주인"이므로, 막는 조건은 그 반대인 "관리자도 주인도 아님"이다(드모르간 법칙).
+        if (!isAdmin && !restaurant.isOwnedBy(actorMemberId)) {
+            throw new RestaurantException(RESTAURANT_FORBIDDEN);
+        }
 
         // 요청 DTO 값으로 Menu 엔티티를 조립 (빌더 패턴). 아직 DB에 저장 전, 메모리 상의 객체일 뿐
         Menu menu = Menu.builder()

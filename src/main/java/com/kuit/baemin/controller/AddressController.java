@@ -3,11 +3,15 @@ package com.kuit.baemin.controller;
 import com.kuit.baemin.common.dto.ApiResponse;
 import com.kuit.baemin.dto.request.AddressCreateRequest;
 import com.kuit.baemin.dto.response.AddressResponse;
+import com.kuit.baemin.exception.AuthException;
+import com.kuit.baemin.exception.errorcode.ErrorStatus;
 import com.kuit.baemin.service.AddressService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -28,18 +32,29 @@ public class AddressController {
 
     private final AddressService addressService;               // 실제 작업을 위임할 서비스. 생성자 주입으로 채워짐
 
-    @Operation(summary = "배송지 등록")                          // Swagger 문서에 표시될 이 API 한 줄 설명
+    @Operation(summary = "배송지 등록 (본인만)")                 // Swagger 문서에 표시될 이 API 한 줄 설명
     @PostMapping                                               // HTTP POST + 클래스의 prefix URL 매핑 (POST /members/{memberId}/addresses)
     public ApiResponse<Long> create(@PathVariable Long memberId,
+                                    @AuthenticationPrincipal Jwt jwt,   // 검증된 토큰 (sub = 로그인한 회원 id)
                                     @Valid @RequestBody AddressCreateRequest req) {  // 요청 JSON 본문 → DTO로 변환(@RequestBody), @Valid로 DTO의 검증 규칙 검사
+        checkSelf(memberId, jwt);   // 인가: 남의 회원 밑에 배송지를 만들지 못하게 막음
         // 서비스가 생성된 배송지의 PK(Long)를 돌려주고, ApiResponse.of(...)로 공통 응답 형식에 감싸서 반환
         return ApiResponse.of(addressService.create(memberId, req));
     }
 
-    @Operation(summary = "회원 배송지 목록 조회")
+    @Operation(summary = "회원 배송지 목록 조회 (본인만)")
     @GetMapping                                               // HTTP GET 매핑 (GET /members/{memberId}/addresses)
-    public ApiResponse<List<AddressResponse>> list(@PathVariable Long memberId) {
+    public ApiResponse<List<AddressResponse>> list(@PathVariable Long memberId,
+                                                   @AuthenticationPrincipal Jwt jwt) {
+        checkSelf(memberId, jwt);   // 인가: 남의 배송지 목록을 못 보게 막음
         // 응답용 DTO(AddressResponse) 리스트를 공통 응답 형식(ApiResponse)에 담아 반환
         return ApiResponse.of(addressService.list(memberId));
+    }
+
+    /** 인가 헬퍼: URL의 {memberId}가 토큰 속 로그인 회원과 다르면 '본인 것이 아님' → 403 */
+    private void checkSelf(Long memberId, Jwt jwt) {
+        if (!memberId.equals(Long.valueOf(jwt.getSubject()))) {
+            throw new AuthException(ErrorStatus.FORBIDDEN);
+        }
     }
 }

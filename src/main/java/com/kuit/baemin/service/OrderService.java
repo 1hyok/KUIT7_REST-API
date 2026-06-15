@@ -50,9 +50,9 @@ public class OrderService {
      * 흐름: 회원/가게/주소 존재 및 권한 검증 → 주문 항목 만들기 → 최소 주문 금액 체크 → Order 저장 후 PK 반환.
      */
     @Transactional                          // 데이터를 저장(쓰기)하므로 읽기전용을 덮어써 쓰기 트랜잭션으로 실행. 중간에 예외가 나면 전체 롤백
-    public Long create(OrderCreateRequest req) {
+    public Long create(Long memberId, OrderCreateRequest req) {   // memberId는 컨트롤러가 인증 토큰에서 꺼내 넘김(본문 신뢰 X)
         // findById 는 Optional 을 돌려줌 → 값이 없으면 orElseThrow 로 예외를 던져 흐름 중단 (없는 회원/가게/주소 차단)
-        Member member = memberRepository.findById(req.getMemberId())
+        Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new MemberException(MEMBER_NOT_FOUND));
 
         Restaurant restaurant = restaurantRepository.findById(req.getRestaurantId())
@@ -172,9 +172,13 @@ public class OrderService {
      * 주문 진행 상태 변경 (가게/관리자 관점 — 종료 상태는 변경 불가).
      */
     @Transactional                          // 상태를 바꿔 저장하므로 쓰기 트랜잭션
-    public OrderStatus changeStatus(Long orderId, OrderStatus next) {
+    public OrderStatus changeStatus(Long orderId, OrderStatus next, Long actorMemberId, boolean isAdmin) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderException(ORDER_NOT_FOUND));
+        // 인가: 그 주문이 발생한 가게의 주인(점주)만 상태를 바꿀 수 있다. ADMIN은 전부 허용
+        if (!isAdmin && !order.getRestaurant().isOwnedBy(actorMemberId)) {
+            throw new OrderException(ORDER_FORBIDDEN);
+        }
         // 진행 상태는 '바로 다음 단계'로만 변경 가능 (역방향·건너뛰기 금지, 취소는 cancel() 경로로만 → 여기선 CANCELED도 거부)
         if (!order.getOrderStatus().canProceedTo(next)) {
             throw new OrderException(ORDER_STATUS_NOT_CHANGEABLE);

@@ -42,4 +42,13 @@ public class Member extends BaseEntity {
     // 변환기가 매핑을 책임지므로 이 필드엔 @Enumerated 를 붙이면 안 됨(충돌).
     @Column(nullable = false, length = 10)
     private ActiveStatus status;
+
+    // 회원 권한(인가용). status 와 달리 별도 컨버터 없이 enum 이름을 그대로 저장한다(예: CONSUMER).
+    // @Enumerated 는 자바 enum 을 DB 컬럼에 저장하는 '방식'을 정하는 JPA 어노테이션이다.
+    //   STRING  → enum 이름을 문자열로 저장. 순서가 바뀌어도 의미가 안 깨져 보통 이걸 권장.
+    //   ORDINAL → 선언 순서 번호를 저장. 순서를 바꾸거나 중간에 끼우면 기존 데이터 의미가 어긋나 위험.
+    // 실행 전 user 테이블에 role 컬럼을 추가해야 한다(마이그레이션 SQL 은 README 참고).
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private MemberRole role;
 }
