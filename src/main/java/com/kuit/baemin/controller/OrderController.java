@@ -77,6 +77,6 @@ public class OrderController {
     public ApiResponse<Void> cancel(@PathVariable Long orderId,    // 취소할 주문 PK는 URL 경로에서
                                     @Login LoginMember member) {   // 요청자는 토큰에서 꺼낸 현재 로그인 회원
         orderService.cancel(orderId, member.id());   // 주문이 이 회원 것인지(본인 주문)는 OrderService가 검증(ORDER_FORBIDDEN)
-        return ApiResponse.of(null);                 // 반환할 데이터가 없는 작업이라 본문 data는 null(성공 여부만 응답)
+        return ApiResponse.success();                // 반환할 데이터가 없는 작업이라 성공 여부만 응답
     }
 }

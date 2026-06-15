@@ -41,7 +41,7 @@ public class GlobalExceptionHandler {
                 .map(FieldError::getDefaultMessage)             // 각 오류 → 사람이 읽을 메시지 (어노테이션의 message 값)
                 .collect(Collectors.joining(", "));             // 여러 개면 ", "로 이어 붙임. 예: "이름은 필수입니다, 가격은 0 이상이어야 합니다"
         log.warn("[Validation 오류] {}", message);              // 사용자 입력 실수 수준이라 warn (서버 장애가 아님)
-        return ApiResponse.onFailure(ErrorStatus.BAD_REQUEST.getCode(), message, null);
+        return ApiResponse.onFailure(ErrorStatus.BAD_REQUEST.getCode(), message);
     }
 
     /**
@@ -55,7 +55,7 @@ public class GlobalExceptionHandler {
         log.warn("[GeneralException] code={}, message={}", errorStatus.getCode(), errorStatus.getMessage());
         return ResponseEntity
                 .status(errorStatus.getHttpStatus())            // ResponseEntity.status(...) = 'HTTP 상태' 설정(Spring 메서드). errorStatus가 정한 상태코드로 응답 (예: NOT_FOUND→404)
-                .body(ApiResponse.onFailure(errorStatus.getCode(), errorStatus.getMessage(), null));   // 본문은 일관된 실패 응답 형태
+                .body(ApiResponse.onFailure(errorStatus.getCode(), errorStatus.getMessage()));   // 본문은 일관된 실패 응답 형태
     }
 
     /**
@@ -68,8 +68,7 @@ public class GlobalExceptionHandler {
         log.error("[Exception] 처리되지 않은 예외 발생", e);    // 예상 못 한 서버 버그이므로 error 레벨 + 예외 객체(e)를 넘겨 스택트레이스까지 로그로 남김
         return ApiResponse.onFailure(
                 ErrorStatus.INTERNAL_SERVER_ERROR.getCode(),    // 내부 원인은 로그에만 남기고, 응답엔 일반화된 메시지만 노출 (보안상 상세 노출 X)
-                ErrorStatus.INTERNAL_SERVER_ERROR.getMessage(),
-                null
+                ErrorStatus.INTERNAL_SERVER_ERROR.getMessage()
         );
     }
 }

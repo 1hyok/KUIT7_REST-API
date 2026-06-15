@@ -28,8 +28,16 @@ public class ApiResponse<T> {
         return new ApiResponse<>(true, API_SUCCESS.getCode(), API_SUCCESS.getMessage(), result);
     }
 
+    public static <T> ApiResponse<T> success() {   // 돌려줄 데이터가 없는 성공(cancel·logout 등). of(null)을 직접 안 넘기게 하는 편의 팩토리
+        return of(null);
+    }
+
     // ── 실패 응답 ──
-    public static <T> ApiResponse<T> onFailure(String code, String message, T data) {   // 실패 코드/메시지로 실패 응답 생성(GlobalExceptionHandler가 사용)
+    public static <T> ApiResponse<T> onFailure(String code, String message) {   // 데이터 없는 실패 응답(대부분의 에러). null을 직접 안 넘기게 함
+        return onFailure(code, message, null);
+    }
+
+    public static <T> ApiResponse<T> onFailure(String code, String message, T data) {   // 실패 + 부가 데이터(예: 필드별 검증 오류 목록)를 함께 줄 때
         return new ApiResponse<>(false, code, message, data);
     }
 }
