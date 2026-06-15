@@ -29,6 +29,15 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
 
+    // Spring Security + JWT
+    //  - starter-security: SecurityFilterChain·@EnableWebSecurity 등 보안 핵심(spring-security-config/web)
+    //  - oauth2-resource-server: Bearer 토큰(JWT) 검증/발급용 Nimbus 기반 JwtDecoder·JwtEncoder 포함
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+
+    // Redis — RefreshToken 저장소 (TTL 자동만료·회전). 실행 전 로컬에 Redis가 떠 있어야 함
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
     // MySQL
     runtimeOnly 'com.mysql:mysql-connector-j'
 

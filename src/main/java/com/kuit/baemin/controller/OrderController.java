@@ -26,11 +26,11 @@ import org.springframework.web.bind.annotation.*;
  * 비즈니스 로직(주문 생성/상태 전이/취소 규칙 등)은 직접 처리하지 않고 모두 OrderService가 담당한다.
  */
 @Tag(name = "Order", description = "주문 API")  // (Swagger) name="Order"=섹션 제목(화면의 굵은 글씨), description="주문 API"=그 옆 작은 설명. 둘 다 문서 표시용, 동작과 무관
-@RestController
+@RestController                                 // = @Controller + @ResponseBody. @ResponseBody 덕분에 각 메서드 반환값을 '뷰 이름'이 아니라 응답 본문으로 직렬화(객체→JSON, HttpMessageConverter가 처리)
 @RequiredArgsConstructor
 public class OrderController {
 
-    private final OrderService orderService;    // 실제 주문 처리를 위임할 서비스. 생성자 주입으로 채워짐
+    private final OrderService orderService;    // 실제 주문 처리를 위임할 서비스. 생성자 주입으로 채워짐 — Spring이 생성자 파라미터 '타입'(OrderService)을 보고 컨테이너에서 그 타입의 빈을 찾아 넣음
 
     @Operation(summary = "주문 생성 (항목/옵션, 배송지 지정 — 최소 주문 금액 검증)")  // (Swagger) summary=Order 섹션 안에서 이 API 줄(POST /orders) 옆에 뜨는 제목. @Tag는 그룹 라벨, summary는 개별 API 라벨
 

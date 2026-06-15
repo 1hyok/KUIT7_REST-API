@@ -23,7 +23,21 @@ spring:
       hibernate:
         format_sql: true               # 위 SQL 을 보기 좋게 줄바꿈/들여쓰기 해서 출력
         dialect: org.hibernate.dialect.H2Dialect   # Hibernate 가 H2 에 맞는 SQL 을 생성하도록 방언(dialect) 지정
+        # 'user'는 H2 예약어라 create table user 가 문법 오류로 깨짐 → 예약어인 식별자를 자동으로 따옴표 처리("user")
+        auto_quote_keyword: true
     # OSIV(Open Session In View) 끄기.
     #   false = 트랜잭션(서비스 계층)이 끝나면 영속성 컨텍스트도 닫힘.
     #   -> 컨트롤러/뷰 단계에서 LAZY 연관을 무심코 조회하면 예외가 나므로, 지연 로딩 문제를 테스트에서 일찍 드러냄
     open-in-view: false
+
+  # Redis 연결 정보(테스트용). 커넥션은 실제 사용 시점에 맺으므로, contextLoads 테스트는 Redis가 안 떠 있어도 통과
+  data:
+    redis:
+      host: localhost
+      port: 6379          # 포트 = host(localhost) 안에서 '어느 서비스'에 연결할지 가리키는 번호. 6379 = Redis 기본(관례) 포트 → "이 PC의 6379번 Redis에 접속"
+
+# JWT 설정(테스트용). @SpringBootTest 가 전체 컨텍스트를 띄울 때 jwt.secret 이 필요해 여기에도 둔다.
+jwt:
+  secret: test-secret-please-change-this-to-32bytes-or-longer-for-hs256
+  access-token-validity-seconds: 1800
+  refresh-token-validity-seconds: 1209600

@@ -31,7 +31,7 @@ import static com.kuit.baemin.exception.errorcode.ErrorStatus.*;
  * Controller(요청 처리)와 Repository(DB 접근) 사이에서 "주문을 어떻게 만들고/취소하고/상태를 바꿀지"의 규칙을 모아둔다.
  * (예: 가게가 영업 중인지, 주소가 본인 것인지, 최소 주문 금액을 넘는지 등 검증 → 통과해야만 저장)
  */
-@Service
+@Service                            // @Component의 특화형 — 기능(스캔→빈 등록)은 동일, 차이는 '의미' 표시: 이 클래스가 비즈니스 로직(서비스 계층)임을 나타냄(가독성·AOP 대상 지정에 유리)
 @RequiredArgsConstructor
 @Transactional(readOnly = true)     // 클래스의 모든 메서드는 기본적으로 "읽기 전용" 트랜잭션. 쓰기가 필요한 메서드는 아래처럼 @Transactional 로 덮어쓴다
 public class OrderService {
