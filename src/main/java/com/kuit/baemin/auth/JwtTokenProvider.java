@@ -1,10 +1,10 @@
 package com.kuit.baemin.auth;
 
+import com.kuit.baemin.config.JwtProperties;
 import com.kuit.baemin.domain.member.MemberRole;
 import com.kuit.baemin.exception.AuthException;
 import com.kuit.baemin.exception.errorcode.ErrorStatus;
 import lombok.Getter;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.*;
 import org.springframework.stereotype.Component;
@@ -33,17 +33,16 @@ public class JwtTokenProvider {
 
     public JwtTokenProvider(JwtEncoder jwtEncoder,
                             SecretKey secretKey,
-                            // @Value("${키}") : application.yml 등 외부 설정에서 그 키 값을 찾아 주입. jwt.access-token-validity-seconds(=1800)를 long으로 변환해 꽂음
-                            @Value("${jwt.access-token-validity-seconds}") long accessTokenValiditySeconds,
-                            @Value("${jwt.refresh-token-validity-seconds}") long refreshTokenValiditySeconds) {
+                            // 토큰 수명 설정을 JwtProperties(@ConfigurationProperties)에서 주입 (흩어진 @Value 대신 그룹 바인딩)
+                            JwtProperties jwtProperties) {
         this.jwtEncoder = jwtEncoder;
         // refresh 토큰 파싱용 디코더(기본 검증=서명+만료). 리소스 서버 디코더는 type=access만 통과시키므로,
         // refresh(type=refresh)를 검증하려면 type 제약이 없는 별도 디코더가 필요하다.
         this.refreshTokenDecoder = NimbusJwtDecoder.withSecretKey(secretKey)   // withSecretKey: '대칭 비밀키(HMAC)'로 검증하는 디코더를 만든다 (RSA 공개키 방식 대신)
                 .macAlgorithm(MacAlgorithm.HS256)                              // macAlgorithm: 서명 알고리즘 지정 = HMAC-SHA256(HS256). 발급 때와 같아야 검증 통과
                 .build();
-        this.accessTokenValiditySeconds = accessTokenValiditySeconds;
-        this.refreshTokenValiditySeconds = refreshTokenValiditySeconds;
+        this.accessTokenValiditySeconds = jwtProperties.accessTokenValiditySeconds();
+        this.refreshTokenValiditySeconds = jwtProperties.refreshTokenValiditySeconds();
     }
 
     /** API 접근용 access 토큰 발급 (짧은 수명). 회원의 role 을 클레임으로 실어 인가에 사용 */
