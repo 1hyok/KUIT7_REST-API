@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
  * <ul>
  *   <li>JWT 토큰 검증 — Authorization: Bearer 헤더의 토큰을 Spring Security(리소스 서버)가 자동 검증 (SecurityConfig 참고)</li>
  *   <li>인증 — 로그인 성공 시 access/refresh 토큰 발급(login). 보호 API는 토큰이 있어야 접근 가능</li>
- *   <li>인가 — 회원 id는 PathVariable이 아니라 토큰(@AuthenticationPrincipal)에서 꺼내, '본인 것만' 접근하도록 함 (Order/Address 컨트롤러 참고)</li>
+ *   <li>인가 — 회원 id는 PathVariable이 아니라 토큰(커스텀 @Login LoginMember)에서 꺼내, '본인 것만' 접근하도록 함 (Order/Address 컨트롤러 참고)</li>
  * </ul>
  */
 @RestController

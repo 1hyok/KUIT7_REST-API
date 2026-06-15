@@ -23,11 +23,22 @@ CREATE DATABASE baemin DEFAULT CHARACTER SET utf8mb4;
 
 ## 완성된 API (참고용)
 
-| Method | URI | 설명 |
-|--------|-----|------|
-| POST | /members | 회원 가입 |
-| POST | /members/login | 로그인 |
-| GET | /members/{memberId} | 회원 단건 조회 |
+| Method | URI | 설명 | 인증 |
+|--------|-----|------|------|
+| POST | /members | 회원 가입 | 공개 |
+| POST | /members/login | 로그인 — **JWT access/refresh 발급** | 공개 |
+| GET | /members/{memberId} | 회원 단건 조회 | 🔒 인증 |
+
+### 🔐 인증/인가 API (8주차 추가)
+
+| Method | URI | 설명 | 인증 |
+|--------|-----|------|------|
+| POST | /auth/reissue | 토큰 재발급 — refreshToken으로 access/refresh **회전 발급** | 공개(refresh 필요) |
+| POST | /auth/logout | 로그아웃 — 서버의 refreshToken 폐기 | 🔒 인증 |
+
+- 보호 API는 `Authorization: Bearer <accessToken>` 헤더 필요 (Spring Security OAuth2 Resource Server, stateless 검증).
+- **역할(Role)**: `CONSUMER`(가입 기본) / `OWNER` / `ADMIN`. 가게·카테고리·메뉴 등록·주문 상태변경은 `OWNER`/`ADMIN`만, 그중 메뉴 등록·주문 상태변경은 그 가게의 **소유자(점주)** 만.
+- refreshToken은 Redis에 저장하며 재발급 시 **회전(rotation) + 재사용 탐지**(탈취 시 전체 폐기).
 
 ---
 
@@ -61,21 +72,23 @@ PR 본문에는 본인이 구현한 **10개 API 목록**을 아래 형식으로 
 
 > `members` 3종은 제공된 참고용 API이며, 아래 **13종**이 6주차 ERD 기반으로 직접 구현한 API입니다.
 
-| #  | Method | URI                                | 설명                              | 페이징 |
-|----|--------|------------------------------------|-----------------------------------|:------:|
-| 1  | POST   | /categories                        | 카테고리 생성                     |        |
-| 2  | GET    | /categories                        | 카테고리 목록 조회                | ✅     |
-| 3  | POST   | /restaurants                       | 가게 등록                         |        |
-| 4  | GET    | /restaurants                       | 가게 목록 조회 (categoryId 필터)  | ✅     |
-| 5  | GET    | /restaurants/{restaurantId}        | 가게 상세 조회 (메뉴 목록 포함)   |        |
-| 6  | POST   | /restaurants/{restaurantId}/menus  | 메뉴 등록 (옵션 그룹/옵션 포함)   |        |
-| 7  | GET    | /restaurants/{restaurantId}/menus  | 가게 메뉴 목록 조회               | ✅     |
-| 8  | POST   | /members/{memberId}/addresses      | 배송지 등록                       |        |
-| 9  | GET    | /members/{memberId}/addresses      | 회원 배송지 목록 조회             |        |
-| 10 | POST   | /orders                            | 주문 생성                         |        |
-| 11 | GET    | /members/{memberId}/orders         | 회원별 주문 목록 조회             | ✅     |
-| 12 | PATCH  | /orders/{orderId}/status           | 주문 진행 상태 변경               |        |
-| 13 | DELETE | /orders/{orderId}                  | 주문 취소                         |        |
+> 인증 표기: **공개**(토큰 불필요) / **🔒 인증**(로그인 필요) / **👤 본인**(토큰의 회원만) / **🏪 점주**(그 가게 OWNER/ADMIN)
+
+| #  | Method | URI                                | 설명                              | 페이징 | 인증 |
+|----|--------|------------------------------------|-----------------------------------|:------:|------|
+| 1  | POST   | /categories                        | 카테고리 생성                     |        | 🏪 OWNER/ADMIN |
+| 2  | GET    | /categories                        | 카테고리 목록 조회                | ✅     | 공개 |
+| 3  | POST   | /restaurants                       | 가게 등록 (등록자가 점주가 됨)    |        | 🏪 OWNER/ADMIN |
+| 4  | GET    | /restaurants                       | 가게 목록 조회 (categoryId 필터)  | ✅     | 공개 |
+| 5  | GET    | /restaurants/{restaurantId}        | 가게 상세 조회 (메뉴 목록 포함)   |        | 공개 |
+| 6  | POST   | /restaurants/{restaurantId}/menus  | 메뉴 등록 (옵션 그룹/옵션 포함)   |        | 🏪 그 가게 점주 |
+| 7  | GET    | /restaurants/{restaurantId}/menus  | 가게 메뉴 목록 조회               | ✅     | 공개 |
+| 8  | POST   | /members/{memberId}/addresses      | 배송지 등록                       |        | 👤 본인 |
+| 9  | GET    | /members/{memberId}/addresses      | 회원 배송지 목록 조회             |        | 👤 본인 |
+| 10 | POST   | /orders                            | 주문 생성 (주문자=토큰)           |        | 🔒 인증 |
+| 11 | GET    | /members/{memberId}/orders         | 회원별 주문 목록 조회             | ✅     | 👤 본인 |
+| 12 | PATCH  | /orders/{orderId}/status           | 주문 진행 상태 변경               |        | 🏪 그 가게 점주 |
+| 13 | DELETE | /orders/{orderId}                  | 주문 취소 (본인 주문)             |        | 👤 본인 |
 
 ### 기타 특이사항
 - **ERD 전체 반영**: `category, restaurant, menu, option_group, menu_option, address, orders, order_item, order_item_option` 9개 도메인을 JPA 엔티티 + 연관관계(`@ManyToOne` / `@OneToMany`)로 매핑했습니다. (`user`는 제공된 참고용 `Member`로 대체)
@@ -84,6 +97,7 @@ PR 본문에는 본인이 구현한 **10개 API 목록**을 아래 형식으로 
 - **상태/예외 처리**: 소프트 삭제용 공통 `ActiveStatus`, 주문 진행 상태 `OrderStatus`를 사용하고, 도메인별 예외와 `ErrorStatus`로 표준 에러 응답(HTTP 상태코드 반영)을 제공합니다.
 - **N+1 완화**: `hibernate.default_batch_fetch_size` 설정으로 지연 로딩 시 IN 절 배치 조회를 적용했습니다.
 - **문서화**: `springdoc-openapi`(Swagger UI) — 실행 후 `/swagger-ui.html` 접속.
+- **인증/인가 (8주차)**: Spring Security + JWT(OAuth2 Resource Server, HS256). 로그인 시 access(30분)/refresh(14일) 발급, refresh는 Redis 회전+재사용 탐지. 비밀번호 BCrypt. 역할(CONSUMER/OWNER/ADMIN) + 가게 소유자 기반 인가, 401/403도 공통 `ApiResponse`로 통일. ⚠️ 실행 전 **Redis 기동** 및 DB 컬럼 추가 필요: `ALTER TABLE user ADD COLUMN role VARCHAR(20) NOT NULL DEFAULT 'CONSUMER';`, `ALTER TABLE restaurant ADD COLUMN owner_id BIGINT;`
 
 ---
 
