@@ -27,7 +27,7 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response,
-                         AuthenticationException authException) throws IOException {
+                         AuthenticationException authException) throws IOException {   // throws=이 메서드가 IOException(checked)을 호출자에게 던질(전파할) 수 있다는 선언. 아래 getWriter().write()가 IOException을 던질 수 있어 필요(직접 던지든·호출한 메서드 것을 흘려보내든 포함)
         response.setStatus(ErrorStatus.UNAUTHORIZED.getHttpStatus().value());     // 401
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);   // 응답 Content-Type 헤더를 "application/json"으로 (본문이 JSON임을 알림). _VALUE = 그 MIME 타입의 '문자열' 형태
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());   // 응답 본문을 UTF-8로 인코딩 (한글 에러 메시지 안 깨지게). .name()=Charset.name(): charset의 정식 이름 문자열("UTF-8") 반환 (Servlet 6.1엔 Charset 그대로 받는 오버로드도 있어 .name() 생략 가능)
