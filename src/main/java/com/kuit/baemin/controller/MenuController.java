@@ -14,7 +14,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import java.net.URI;
 
 /**
  * 메뉴(Menu) 관련 HTTP 요청을 받는 컨트롤러(웹 계층).
@@ -32,12 +36,14 @@ public class MenuController {
 
     @Operation(summary = "메뉴 등록 (옵션 그룹/옵션 포함)")  // Swagger UI 'Menu' 섹션 안, "POST /restaurants/{restaurantId}/menus" 줄 오른쪽에 뜨는 회색 제목(요약). 그 줄을 펼치면 상단에도 같은 문구가 보임
     @PostMapping                                        // "POST 방식으로 이 경로(/restaurants/{restaurantId}/menus)에 요청이 들어오면 → 바로 아래 create() 메서드를 실행해라"라고 Spring에게 연결(매핑)해 주는 표지판. (POST = 새로 만들기 요청)
-    public ApiResponse<Long> create(@PathVariable Long restaurantId,   // @PathVariable: URL '경로'의 {restaurantId} 자리 값을 꺼내 이 파라미터로 받음 (POST /restaurants/3/menus → 3)
-                                    @Login LoginMember member,         // 검증된 토큰에서 꺼낸 현재 로그인 회원 — 이 가게의 주인인지 확인하는 데 사용
-                                    @Valid @RequestBody MenuCreateRequest req) {   // @RequestBody: 클라이언트가 보낸 요청 '본문(JSON)'을 MenuCreateRequest 객체로 자동 변환해 req에 담음
+    public ResponseEntity<ApiResponse<Long>> create(@PathVariable Long restaurantId,   // @PathVariable: URL '경로'의 {restaurantId} 자리 값을 꺼내 이 파라미터로 받음 (POST /restaurants/3/menus → 3)
+                                                    @Login LoginMember member,         // 검증된 토큰에서 꺼낸 현재 로그인 회원 — 이 가게의 주인인지 확인하는 데 사용
+                                                    @Valid @RequestBody MenuCreateRequest req) {   // @RequestBody: 클라이언트가 보낸 요청 '본문(JSON)'을 MenuCreateRequest 객체로 자동 변환해 req에 담음
                                                                                // @Valid: 그 req의 필드에 붙은 검증 규칙(@NotBlank/@NotNull/@Positive 등)을 메서드 실행 '전에' 검사. 어기면 400 에러로 막고 create() 본문은 실행 안 함
-        // 등록 성공 시 생성된 메뉴의 PK(Long)를 공통 응답 포맷(ApiResponse)에 담아 반환. (가게 주인 검증은 서비스가 수행)
-        return ApiResponse.of(menuService.create(restaurantId, req, member.id(), member.isAdmin()));
+        // 가게 주인 검증은 서비스가 수행. 생성된 메뉴의 PK(Long)를 받아 201 Created + Location 헤더로 응답
+        Long id = menuService.create(restaurantId, req, member.id(), member.isAdmin());
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(id).toUri();   // /restaurants/{restaurantId}/menus/{id}
+        return ResponseEntity.created(location).body(ApiResponse.of(id));
     }
 
     @Operation(summary = "가게의 메뉴 목록 조회 (페이징)")

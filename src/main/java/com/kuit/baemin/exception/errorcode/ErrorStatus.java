@@ -55,6 +55,8 @@ public enum ErrorStatus {
     // ── 옵션 ──
     MENU_OPTION_NOT_FOUND(HttpStatus.NOT_FOUND, "MENU_OPTION_NOT_FOUND", "존재하지 않는 옵션입니다."),
     INVALID_MENU_OPTION(HttpStatus.BAD_REQUEST, "INVALID_MENU_OPTION", "해당 메뉴의 옵션이 아닙니다."),
+    REQUIRED_OPTION_GROUP_MISSING(HttpStatus.BAD_REQUEST, "REQUIRED_OPTION_GROUP_MISSING", "필수 옵션 그룹을 선택하지 않았습니다."),
+    OPTION_GROUP_SINGLE_VIOLATED(HttpStatus.BAD_REQUEST, "OPTION_GROUP_SINGLE_VIOLATED", "단일 선택 옵션 그룹에서는 옵션을 하나만 선택할 수 있습니다."),
 
     // ── 배송지 ──
     ADDRESS_NOT_FOUND(HttpStatus.NOT_FOUND, "ADDRESS_NOT_FOUND", "존재하지 않는 배송지입니다."),

@@ -138,7 +138,7 @@ class AuthFlowTest {
     private long signup(String email, String phone) throws Exception {
         MvcResult res = mockMvc.perform(post("/members")
                         .contentType(MediaType.APPLICATION_JSON).content(SIGNUP_JSON.formatted(email, phone)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())   // 회원 가입은 새 리소스 생성 → 201 Created
                 .andReturn();
         return result(res).asLong();
     }

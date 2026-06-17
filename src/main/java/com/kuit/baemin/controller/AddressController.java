@@ -12,8 +12,11 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.net.URI;
 import java.util.List;
 
 /**
@@ -34,12 +37,22 @@ public class AddressController {
 
     @Operation(summary = "배송지 등록 (본인만)")                 // Swagger 문서에 표시될 이 API 한 줄 설명
     @PostMapping                                               // HTTP POST + 클래스의 prefix URL 매핑 (POST /members/{memberId}/addresses)
-    public ApiResponse<Long> create(@PathVariable Long memberId,
-                                    @Login LoginMember member,   // 검증된 토큰에서 꺼낸 현재 로그인 회원
-                                    @Valid @RequestBody AddressCreateRequest req) {  // 요청 JSON 본문 → DTO로 변환(@RequestBody), @Valid로 DTO의 검증 규칙 검사
+    public ResponseEntity<ApiResponse<Long>> create(@PathVariable Long memberId,
+                                                    @Login LoginMember member,   // 검증된 토큰에서 꺼낸 현재 로그인 회원
+                                                    @Valid @RequestBody AddressCreateRequest req) {  // 요청 JSON 본문 → DTO로 변환(@RequestBody), @Valid로 DTO의 검증 규칙 검사
         checkSelf(memberId, member);   // 인가: 남의 회원 밑에 배송지를 만들지 못하게 막음
-        // 서비스가 생성된 배송지의 PK(Long)를 돌려주고, ApiResponse.of(...)로 공통 응답 형식에 감싸서 반환
-        return ApiResponse.of(addressService.create(memberId, req));
+        Long id = addressService.create(memberId, req);   // 새로 만든 배송지(Address)의 기본키(PK). DB가 INSERT 때 자동 부여. 회원 id 아님. 바로 아래 Location 만들 때만 쓰는 지역변수라 이름 'id'로 충분
+
+        // 201 응답의 Location 헤더에 넣을 '새로 만든 배송지의 주소'를 조립한다. 단계별:
+        //   fromCurrentRequest() : 지금 들어온 요청 URL(예: /members/3/addresses)에서 출발
+        //   .path("/{id}")       : 그 뒤에 /{id} 한 칸 더 붙임 → /members/3/addresses/{id} (아직 {id}는 빈칸)
+        //   .buildAndExpand(id)  : 빈칸 {id} 에 실제 PK(예: 7) 끼워넣음 → /members/3/addresses/7
+        //   .toUri()             : 완성된 문자열을 URI 객체로 변환
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(id).toUri();
+        // created(location) : 상태코드 201 Created + Location 헤더(위 location)를 세팅한 응답 빌더
+        // .body(...)         : 그 응답의 본문에 공통 봉투 ApiResponse(결과=생성된 PK)를 담음
+        // → 최종: HTTP 201 + Location 헤더 + JSON 본문 {isSuccess,code,message,result:id} 를 반환
+        return ResponseEntity.created(location).body(ApiResponse.of(id));
     }
 
     @Operation(summary = "회원 배송지 목록 조회 (본인만)")

@@ -3,10 +3,10 @@ package com.kuit.baemin.controller;
 import com.kuit.baemin.auth.Login;
 import com.kuit.baemin.auth.LoginMember;
 import com.kuit.baemin.common.dto.ApiResponse;
-import com.kuit.baemin.domain.order.OrderStatus;
 import com.kuit.baemin.dto.request.OrderCreateRequest;
 import com.kuit.baemin.dto.request.OrderStatusUpdateRequest;
 import com.kuit.baemin.dto.response.OrderResponse;
+import com.kuit.baemin.dto.response.OrderStatusResponse;
 import com.kuit.baemin.dto.response.PageResponse;
 import com.kuit.baemin.exception.AuthException;
 import com.kuit.baemin.exception.errorcode.ErrorStatus;
@@ -18,7 +18,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import java.net.URI;
 
 /**
  * 주문(Order) 관련 HTTP 요청을 받는 컨트롤러(웹 계층).
@@ -36,11 +41,15 @@ public class OrderController {
 
     @PostMapping("/orders")                                                        // HTTP POST /orders 요청을 이 메서드로 매핑
     // @Login LoginMember: 검증된 토큰에서 꺼낸 현재 로그인 회원(주문자). 회원 id는 member.id()
-    // @RequestBody: 요청 본문(JSON)을 OrderCreateRequest 객체로 변환 / @Valid: 그 객체의 검증 제약 검사
-    public ApiResponse<Long> create(@Login LoginMember member,
-                                    @Valid @RequestBody OrderCreateRequest req) {
+    // @RequestBody: 요청(들어오는 HTTP) 본문(JSON) → 자바 객체로 '역직렬화'(입력 받기). / @Valid: 그 객체의 검증 제약 검사
+    //   ↔ 헷갈림 주의: '뷰 대신 값(JSON)을 응답으로 내보냄'은 반대 방향인 @ResponseBody(여기선 @RestController에 포함)다. @RequestBody=입력, @ResponseBody=출력.
+    public ResponseEntity<ApiResponse<Long>> create(@Login LoginMember member,
+                                                    @Valid @RequestBody OrderCreateRequest req) {
         // 주문자는 토큰에서만 — 본문으로 받지 않아 사칭 불가
-        return ApiResponse.of(orderService.create(member.id(), req));              // 생성된 주문의 PK(Long)를 공통 응답 포맷에 담아 반환
+        Long id = orderService.create(member.id(), req);
+        // 201 Created + Location 헤더(/orders/{id})
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(id).toUri();
+        return ResponseEntity.created(location).body(ApiResponse.of(id));
     }
 
     @Operation(summary = "회원별 주문 목록 조회 (페이징, 본인만)")
@@ -60,9 +69,9 @@ public class OrderController {
 
     @Operation(summary = "주문 진행 상태 변경 (가게 주인만, PENDING→ACCEPTED→COOKING→...)")
     @PatchMapping("/orders/{orderId}/status")     // HTTP PATCH = 리소스의 일부(여기선 상태값)만 부분 수정
-    public ApiResponse<OrderStatus> changeStatus(@PathVariable Long orderId,
-                                                 @Login LoginMember member,   // 검증된 토큰에서 꺼낸 현재 로그인 회원 — 그 주문 가게의 주인인지 확인용
-                                                 @Valid @RequestBody OrderStatusUpdateRequest req) {
+    public ApiResponse<OrderStatusResponse> changeStatus(@PathVariable Long orderId,
+                                                         @Login LoginMember member,   // 검증된 토큰에서 꺼낸 현재 로그인 회원 — 그 주문 가게의 주인인지 확인용
+                                                         @Valid @RequestBody OrderStatusUpdateRequest req) {
         // 상태 전이 적법성 + 가게 주인 검증은 서비스가 담당. 여기선 요청 상태값과 호출자 정보를 넘김
         return ApiResponse.of(orderService.changeStatus(orderId, req.getStatus(), member.id(), member.isAdmin()));
     }
@@ -73,10 +82,10 @@ public class OrderController {
      * (이전엔 ?memberId=... 로 받아 누구든 사칭 가능했음 → 토큰 기반으로 대체)
      */
     @Operation(summary = "주문 취소 (본인 주문 + 취소 가능 상태만)")
+    @ResponseStatus(HttpStatus.NO_CONTENT)         // 삭제/취소처럼 돌려줄 데이터가 없는 작업은 204 No Content (응답 본문 없음)
     @DeleteMapping("/orders/{orderId}")
-    public ApiResponse<Void> cancel(@PathVariable Long orderId,    // 취소할 주문 PK는 URL 경로에서
-                                    @Login LoginMember member) {   // 요청자는 토큰에서 꺼낸 현재 로그인 회원
+    public void cancel(@PathVariable Long orderId,    // 취소할 주문 PK는 URL 경로에서
+                       @Login LoginMember member) {   // 요청자는 토큰에서 꺼낸 현재 로그인 회원
         orderService.cancel(orderId, member.id());   // 주문이 이 회원 것인지(본인 주문)는 OrderService가 검증(ORDER_FORBIDDEN)
-        return ApiResponse.success();                // 반환할 데이터가 없는 작업이라 성공 여부만 응답
-    }
+    }                                                // 반환 타입 void + 204 → 성공 시 본문 없이 상태코드만. (다른 엔드포인트의 ApiResponse 봉투와 달리, 데이터 없는 삭제는 REST 관례상 204)
 }

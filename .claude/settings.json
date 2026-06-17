@@ -7,6 +7,10 @@
           {
             "type": "command",
             "command": "jq -r '.tool_input.command // empty' | grep -Eq '(^|[^[:alnum:]])git[[:space:]]+([^;&|]*[[:space:]])?commit([[:space:]]|$)' && printf '%s' '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"커밋은 훅으로 차단돼 있어요. 변경이 필요하면 사용자가 직접 커밋하세요. (해제: .claude/settings.json 의 PreToolUse 훅 삭제)\"}}'; exit 0"
+          },
+          {
+            "type": "command",
+            "command": "c=$(jq -r '.tool_input.command // empty'); printf '%s' \"$c\" | grep -Eq '(^|[^[:alnum:]])gradlew?([[:space:]]|$)' && printf '%s' \"$c\" | grep -Eq '(^|[^[:alnum:]])clean([[:space:]]|$)' && printf '%s' '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"이 프로젝트에서 gradle clean 은 차단돼 있어요. clean 이 build/ 를 지워 IntelliJ 워크스페이스 모델을 깨고 모듈 JDK 미정의·빨간 줄을 유발합니다. clean 없이 ./gradlew compileJava 또는 ./gradlew test 를 쓰세요. (해제: .claude/settings.json 의 PreToolUse 훅에서 이 항목 삭제)\"}}'; exit 0"
           }
         ]
       }

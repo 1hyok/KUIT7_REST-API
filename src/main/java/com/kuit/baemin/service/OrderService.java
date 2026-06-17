@@ -5,6 +5,8 @@ import com.kuit.baemin.domain.address.Address;
 import com.kuit.baemin.domain.member.Member;
 import com.kuit.baemin.domain.menu.Menu;
 import com.kuit.baemin.domain.menu.MenuOption;
+import com.kuit.baemin.domain.menu.OptionGroup;
+import com.kuit.baemin.domain.menu.SelectionType;
 import com.kuit.baemin.domain.order.Order;
 import com.kuit.baemin.domain.order.OrderItem;
 import com.kuit.baemin.domain.order.OrderItemOption;
@@ -13,6 +15,7 @@ import com.kuit.baemin.domain.restaurant.Restaurant;
 import com.kuit.baemin.dto.request.OrderCreateRequest;
 import com.kuit.baemin.dto.request.OrderItemRequest;
 import com.kuit.baemin.dto.response.OrderResponse;
+import com.kuit.baemin.dto.response.OrderStatusResponse;
 import com.kuit.baemin.dto.response.PageResponse;
 import com.kuit.baemin.exception.*;
 import com.kuit.baemin.repository.*;
@@ -23,6 +26,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.kuit.baemin.exception.errorcode.ErrorStatus.*;
 
@@ -130,7 +135,38 @@ public class OrderService {
             item.addOption(OrderItemOption.of(option));     // of(...): MenuOption(메뉴 카탈로그) → OrderItemOption(주문 시점 스냅샷)으로 가격을 복사해 변환.
             //   둘을 따로 두는 이유: 나중에 가게가 옵션 가격을 바꿔도, '과거 주문 금액'은 주문 당시 값(priceAtOrder)으로 그대로 보존하려고. MenuOption만 참조하면 과거 주문 금액이 소급해 바뀜
         }
+
+        // 옵션 그룹 단위 도메인 규칙 검증. (위 검사들은 '옵션이 존재하나/이 메뉴 소속이냐'까지만 봄)
+        //   메뉴가 정의한 required(필수 선택)·selectionType(단일/다중) 규칙은 그룹 단위라 따로 확인해야 함.
+        //   예) '맵기'가 필수인데 안 고른 주문, '면 양'(단일)에서 곱빼기+보통을 둘 다 고른 주문을 여기서 차단.
+        validateOptionGroupRules(menu, options);
         return item;
+    }
+
+    /**
+     * 옵션 그룹 단위 규칙 검증.
+     * - required(필수) 그룹: 선택된 옵션이 최소 1개 있어야 함 (안 고르면 거절)
+     * - SINGLE(단일 선택) 그룹: 선택된 옵션이 1개를 넘으면 거절 (MULTIPLE 그룹은 여러 개 허용)
+     */
+    private void validateOptionGroupRules(Menu menu, List<MenuOption> selectedOptions) {
+        // 선택된 옵션들을 '소속 옵션 그룹 id'별로 묶어, 그룹마다 몇 개를 골랐는지 센다 → Map<그룹id, 선택개수>
+        //   groupingBy(분류기준, 다운스트림): 1번째 인자로 묶을 기준(key)을, 2번째 인자로 각 묶음을 어떻게 집계할지를 정한다.
+        //     - o -> o.getOptionGroup().getId() : 각 옵션이 속한 옵션그룹의 id를 key로 사용(= 같은 그룹끼리 한 칸에 모음)
+        //     - Collectors.counting()           : 그 묶음 안의 옵션 '개수'를 세서 value로 (옵션 객체 리스트 대신 개수만 필요)
+        //   예) 선택 [곱빼기(그룹1), 맵게(그룹2), 단무지(그룹2)] → {1=1, 2=2} (그룹1에서 1개, 그룹2에서 2개 고름)
+        Map<Long, Long> selectedCountByGroup = selectedOptions.stream()
+                .collect(Collectors.groupingBy(o -> o.getOptionGroup().getId(), Collectors.counting()));
+
+        // 메뉴가 정의한 모든 옵션 그룹을 돌며 그룹별 제약을 검사 (LAZY지만 쓰기 트랜잭션 안이라 안전하게 조회됨)
+        for (OptionGroup group : menu.getOptionGroups()) {
+            long selected = selectedCountByGroup.getOrDefault(group.getId(), 0L);
+            if (group.isRequired() && selected == 0) {                 // 필수 그룹인데 하나도 안 고름
+                throw new MenuException(REQUIRED_OPTION_GROUP_MISSING);
+            }
+            if (group.getSelectionType() == SelectionType.SINGLE && selected > 1) {   // 단일 선택 그룹에 2개 이상 고름
+                throw new MenuException(OPTION_GROUP_SINGLE_VIOLATED);
+            }
+        }
     }
 
     /**
@@ -172,7 +208,7 @@ public class OrderService {
      * 주문 진행 상태 변경 (가게/관리자 관점 — 종료 상태는 변경 불가).
      */
     @Transactional                          // 상태를 바꿔 저장하므로 쓰기 트랜잭션
-    public OrderStatus changeStatus(Long orderId, OrderStatus next, Long actorMemberId, boolean isAdmin) {
+    public OrderStatusResponse changeStatus(Long orderId, OrderStatus next, Long actorMemberId, boolean isAdmin) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderException(ORDER_NOT_FOUND));
         // 인가: 그 주문이 발생한 가게의 주인(점주)만 상태를 바꿀 수 있다. ADMIN은 전부 허용
@@ -184,6 +220,6 @@ public class OrderService {
             throw new OrderException(ORDER_STATUS_NOT_CHANGEABLE);
         }
         order.changeStatus(next);                       // 변경 감지로 트랜잭션 종료 시 자동 반영
-        return order.getOrderStatus();
+        return OrderStatusResponse.from(order);         // 도메인 enum을 그대로 노출하지 않고 응답 DTO로 감싸 반환
     }
 }

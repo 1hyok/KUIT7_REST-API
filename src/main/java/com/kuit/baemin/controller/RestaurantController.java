@@ -15,7 +15,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import java.net.URI;
 
 @Tag(name = "Restaurant", description = "가게 API")   // (Swagger 문서) 이 컨트롤러의 API들을 'Restaurant' 그룹으로 묶음
 @RestController
@@ -27,9 +31,12 @@ public class RestaurantController {
 
     @Operation(summary = "가게 등록 (OWNER/ADMIN, 등록자가 점주가 됨)")   // (Swagger) 이 API의 한 줄 설명
     @PostMapping                        // HTTP POST /restaurants 요청을 이 메서드가 처리 (보통 '생성'에 사용)
-    public ApiResponse<Long> create(@Login LoginMember member,   // 검증된 토큰에서 꺼낸 현재 로그인 회원(등록자=점주)
-                                    @Valid @RequestBody RestaurantCreateRequest req) {
-        return ApiResponse.of(restaurantService.create(member.id(), req));   // 등록자 id를 주인으로
+    public ResponseEntity<ApiResponse<Long>> create(@Login LoginMember member,   // 검증된 토큰에서 꺼낸 현재 로그인 회원(등록자=점주)
+                                                    @Valid @RequestBody RestaurantCreateRequest req) {
+        Long id = restaurantService.create(member.id(), req);   // 등록자 id를 주인으로
+        // 201 Created + Location 헤더(/restaurants/{id}). 이 경로엔 GET 상세조회(getDetail)가 있어 바로 따라갈 수 있음
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(id).toUri();
+        return ResponseEntity.created(location).body(ApiResponse.of(id));
     }
 
     @Operation(summary = "가게 목록 조회 (페이징, categoryId로 카테고리 필터링)")

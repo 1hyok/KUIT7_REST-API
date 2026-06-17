@@ -9,7 +9,11 @@ import com.kuit.baemin.dto.response.MemberResponse;
 import com.kuit.baemin.service.MemberService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import java.net.URI;
 
 /**
  * 회원 API 컨트롤러.
@@ -32,9 +36,14 @@ public class MemberController {
     /**
      * POST /members — 회원 가입
      */
+    // 201 Created 의 '완벽한 정석': 상태코드뿐 아니라 Location 헤더에 '새로 만든 리소스의 주소'까지 담아 준다.
+    //   ResponseEntity.created(uri) = 상태 201 + Location 헤더를 한 번에 세팅 (ResponseEntity가 상태를 직접 들고 있어 @ResponseStatus는 불필요).
+    //   ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}") = 지금 요청 URL(/members) 뒤에 /{생성된id}를 붙여 → /members/{id}
     @PostMapping
-    public ApiResponse<Long> signUp(@Valid @RequestBody SignUpRequest req) {
-        return ApiResponse.of(memberService.signUp(req));
+    public ResponseEntity<ApiResponse<Long>> signUp(@Valid @RequestBody SignUpRequest req) {
+        Long id = memberService.signUp(req);
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(id).toUri();
+        return ResponseEntity.created(location).body(ApiResponse.of(id));   // 201 + Location: /members/{id} (이 경로엔 GET 단건조회가 있어 바로 따라갈 수 있음)
     }
 
     /**

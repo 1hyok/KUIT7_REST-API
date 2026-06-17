@@ -12,7 +12,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
+import java.net.URI;
 
 /**
  * 카테고리 Controller — 외부 HTTP 요청이 들어오는 'API 입구'.
@@ -29,10 +33,13 @@ public class CategoryController {
 
     @Operation(summary = "카테고리 생성")   // (Swagger/OpenAPI) 이 메서드(엔드포인트) 하나에 대한 설명. summary = Swagger UI 에서 POST /categories 옆에 뜨는 한 줄 제목. 문서 표시용일 뿐 동작엔 영향 없음
     @PostMapping                          // 'HTTP POST + /categories' 요청을 이 메서드에 연결. @RequestMapping(method=POST)의 단축형. POST=새 데이터 '생성' 용도 (경로 생략 → 클래스의 /categories 그대로)
-    public ApiResponse<Long> create(@Valid @RequestBody CategoryCreateRequest req) {
+    public ResponseEntity<ApiResponse<Long>> create(@Valid @RequestBody CategoryCreateRequest req) {
         // @RequestBody : 요청 본문(JSON)을 CategoryCreateRequest 객체로 자동 변환
         // @Valid       : 그 객체의 검증 규칙(@NotBlank 등)을 자동 검사 → 위반 시 400 에러
-        return ApiResponse.of(categoryService.create(req));   // ApiResponse = 우리 프로젝트 공통 응답 포맷(성공/코드/결과). 결과로 생성된 카테고리 id 반환
+        Long id = categoryService.create(req);
+        // 201 Created + Location 헤더(/categories/{id})
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(id).toUri();
+        return ResponseEntity.created(location).body(ApiResponse.of(id));   // ApiResponse = 공통 응답 포맷. 결과로 생성된 카테고리 id 반환
     }
 
     @Operation(summary = "카테고리 목록 조회 (페이징)")
