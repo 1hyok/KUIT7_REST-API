@@ -14,7 +14,12 @@ import lombok.*;
 @Entity
 @Getter
 @Builder
-@Table(name = "menu_option")
+// 복합 UNIQUE 제약: (option_group_id, name) '조합'이 유일해야 함 = 한 옵션 그룹 안에서 옵션 이름 중복 금지. 다른 그룹이면 같은 이름 OK.
+//   예) '맵기' 그룹에 '보통' 두 개 → 거부 / '맵기'의 '보통' + '양'의 '보통' → 허용(그룹이 다르니 조합이 다름)
+//   columnNames = 묶을 컬럼들 / name="uk_..." = 이 제약의 DB 이름(나중에 참조·삭제 쉽게). 업무 규칙 가정이라 안 맞으면 제거.
+//   주의: ddl-auto=none → 이 제약도 자동 적용 안 됨. schema.sql 재생성 후 DB에 실행해야 실제로 걸린다.
+@Table(name = "menu_option",
+       uniqueConstraints = @UniqueConstraint(name = "uk_menu_option_group_name", columnNames = {"option_group_id", "name"}))
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class MenuOption extends BaseEntity {

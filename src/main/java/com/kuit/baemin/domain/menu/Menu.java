@@ -5,6 +5,7 @@ import com.kuit.baemin.domain.BaseEntity;
 import com.kuit.baemin.domain.restaurant.Restaurant;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Check;   // DB 레벨 CHECK 제약 생성용
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,6 +21,7 @@ import java.util.List;
 @Getter
 @Builder
 @Table(name = "menu")
+@Check(constraints = "status in ('active','inactive')")   // status 컬럼 허용값 제한
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Menu extends BaseEntity {

@@ -2,11 +2,12 @@ package com.kuit.baemin.domain.order;
 
 import com.kuit.baemin.common.domain.ActiveStatus;
 import com.kuit.baemin.domain.BaseEntity;
-import com.kuit.baemin.domain.restaurant.Restaurant;
 import com.kuit.baemin.domain.address.Address;
 import com.kuit.baemin.domain.member.Member;
+import com.kuit.baemin.domain.restaurant.Restaurant;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Check;   // DB 레벨 CHECK 제약 생성용
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +23,7 @@ import java.util.List;
 @Getter
 @Builder                                             // (Lombok) Order.builder()...build() 형태로 객체 생성. 아래 전체 인자 생성자에 위임한다
 @Table(name = "orders")                              // 매핑할 테이블명. order 는 SQL 예약어라 복수형 orders 사용
+@Check(constraints = "status in ('active','inactive') and order_status in ('pending','accepted','cooking','delivering','completed','canceled')")   // status·order_status 허용값 제한
 @AllArgsConstructor                                  // (Lombok) 모든 필드를 받는 생성자. @Builder 가 이걸로 객체를 채운다(@NoArgsConstructor 가 있으면 자동생성이 막혀 명시 필요)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)   // (Lombok) JPA 가 요구하는 무인자 생성자. protected 로 막아 외부의 new Order() 를 차단 → 빌더 사용 유도
 public class Order extends BaseEntity {              // BaseEntity 상속 → 생성/수정 시각 등 공통 컬럼을 물려받음

@@ -4,6 +4,7 @@ import com.kuit.baemin.common.domain.ActiveStatus;
 import com.kuit.baemin.domain.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Check;   // DB 레벨 CHECK 제약(허용값만 통과) 생성용 — 잘못된 값이 컨버터를 우회해 들어오는 것 방지
 
 /**
  * 회원 엔티티 (ERD: user 테이블).
@@ -17,6 +18,7 @@ import lombok.*;
 @Getter
 @Builder                                             // 빌더 패턴 생성(Member.builder().email(..).build()) — 어떤 값을 넣는지 코드에 드러남
 @Table(name = "user")                                // ERD 테이블명에 맞춤 (단수)
+@Check(constraints = "status in ('active','inactive')")   // status 컬럼엔 이 두 값만 허용 (role 은 이미 ENUM 타입이라 별도 불필요)
 @AllArgsConstructor                                  // @Builder 가 내부적으로 쓰는 전체 필드 생성자
 @NoArgsConstructor(access = AccessLevel.PROTECTED)   // JPA가 객체를 만들 때 쓰는 기본 생성자(필수). PROTECTED = 외부의 무분별한 new 차단
 public class Member extends BaseEntity {

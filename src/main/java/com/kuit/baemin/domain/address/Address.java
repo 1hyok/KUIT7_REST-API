@@ -5,6 +5,7 @@ import com.kuit.baemin.domain.BaseEntity;
 import com.kuit.baemin.domain.member.Member;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Check;   // DB 레벨 CHECK 제약 생성용
 
 import java.math.BigDecimal;
 
@@ -17,6 +18,10 @@ import java.math.BigDecimal;
 @Getter
 @Builder                                               // 빌더 패턴으로 객체 생성 (Address.builder().road(...).build())
 @Table(name = "address")
+// @Check = Hibernate가 테이블에 'CHECK 제약'(DB 무결성 규칙)을 생성. 조건을 어기는 값은 DB가 INSERT/UPDATE 거부.
+//   status 컬럼엔 'active'/'inactive'만, type 컬럼엔 'home'/'work'/'etc'만 허용 (컨버터가 소문자로 저장하므로 값이 정확히 일치).
+//   주의: 이 앱은 ddl-auto=none → 이 제약이 자동으로 DB에 안 걸림. 엔티티에서 schema.sql 재생성 후 그 DDL을 DB에 실행해야 실제 적용됨.
+@Check(constraints = "status in ('active','inactive') and type in ('home','work','etc')")
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Address extends BaseEntity {

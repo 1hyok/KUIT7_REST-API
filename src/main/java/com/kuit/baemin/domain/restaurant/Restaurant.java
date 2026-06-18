@@ -6,6 +6,7 @@ import com.kuit.baemin.domain.category.Category;
 import com.kuit.baemin.domain.member.Member;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Check;   // DB 레벨 CHECK 제약 생성용
 
 import java.math.BigDecimal;
 
@@ -19,6 +20,7 @@ import java.math.BigDecimal;
 @Getter                                              // (Lombok) 모든 필드의 조회 메서드(getName() 등)를 자동 생성해 줌
 @Builder                                             // (Lombok) Restaurant.builder().name("..").build() 형태로 객체를 만들게 해줌
 @Table(name = "restaurant")                          // 매핑할 실제 DB 테이블 이름 (ERD에 맞춰 단수)
+@Check(constraints = "status in ('active','inactive')")   // status 컬럼 허용값 제한 (owner_id 는 미지정 가게 허용이라 의도적으로 nullable 유지)
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Restaurant extends BaseEntity {         // BaseEntity 상속 → createdAt/updatedAt(생성·수정 시각) 필드를 물려받음

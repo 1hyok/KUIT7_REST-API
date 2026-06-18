@@ -4,6 +4,7 @@ import com.kuit.baemin.common.domain.ActiveStatus;
 import com.kuit.baemin.domain.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Check;   // DB 레벨 CHECK 제약 생성용
 
 /**
  * 음식 카테고리 (ERD: category) — 예: "치킨", "한식", "분식".
@@ -16,6 +17,7 @@ import lombok.*;
 @Getter                                              // 모든 필드의 getter 자동 생성 (setter 는 안 만들어 외부에서 막 못 바꾸게 함)
 @Builder                                             // 빌더 패턴 생성자 자동 생성 (Category.builder().name(..).build() 형태)
 @Table(name = "category")                            // 매핑할 실제 테이블명 지정 (안 쓰면 클래스명 기반 기본값)
+@Check(constraints = "status in ('active','inactive')")   // status 컬럼 허용값 제한
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Category extends BaseEntity {

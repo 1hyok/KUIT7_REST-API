@@ -3,6 +3,7 @@ package com.kuit.baemin.domain.menu;
 import com.kuit.baemin.domain.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.Check;   // DB 레벨 CHECK 제약 생성용
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +16,10 @@ import java.util.List;
 @Entity
 @Getter
 @Builder
-@Table(name = "option_group")
+// uniqueConstraints: 한 메뉴(menu_id) 안에서 옵션 그룹 이름(name)이 중복되지 않도록 복합 UNIQUE (업무 규칙 가정 — 깨지면 이 제약 제거)
+@Table(name = "option_group",
+       uniqueConstraints = @UniqueConstraint(name = "uk_option_group_menu_name", columnNames = {"menu_id", "name"}))
+@Check(constraints = "selection_type in ('single','multiple')")   // selection_type 허용값 제한
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class OptionGroup extends BaseEntity {
