@@ -12,6 +12,11 @@ spring:
     password:                          # 비밀번호 없음 (테스트용 인메모리라 보안 불필요)
     # driver-class-name 생략: Spring Boot가 url의 jdbc:h2: 접두사로 H2 드라이버 자동 판별
 
+  # Flyway 끄기: 마이그레이션(V1)은 MySQL 전용 DDL(engine=InnoDB, bit, enum(...) 등)이라 H2에서 실행하면 깨진다.
+  #   테스트는 아래 ddl-auto=create-drop 으로 H2가 엔티티 기준 스키마를 직접 만든다. (운영만 Flyway 사용)
+  flyway:
+    enabled: false
+
   jpa:
     hibernate:
       # 엔티티(@Entity) 기준으로 테이블을 다룰 때의 전략

@@ -7,6 +7,14 @@ spring:
     password: ${DATASOURCE_PASSWORD} # 본인 DB 비밀번호 환경변수에 저장
     # driver-class-name 생략: Spring Boot가 url의 jdbc:mysql:// 접두사로 드라이버 자동 판별
 
+  # Flyway — 스키마 마이그레이션. 앱 시작 시 classpath:db/migration 의 V*.sql 을 버전 순서대로 실행하고
+  #   적용 이력을 flyway_schema_history 테이블에 남긴다. (수동으로 schema.sql 돌리던 것을 대체)
+  flyway:
+    enabled: true
+    # baseline-on-migrate: 이미 테이블이 있는 '기존' DB에 처음 붙을 때, V1 을 baseline(=이미 적용됨)으로 표시만 하고 재실행 안 함
+    #   → 중복 CREATE TABLE 에러 방지. (완전히 빈 DB면 baseline 안 하고 V1 을 실제로 실행해 테이블을 만든다)
+    baseline-on-migrate: true
+
   jpa:
     hibernate:
       # ddl-auto = 앱 켤 때 Hibernate가 DB 테이블을 다루는 방식 (none=안 건드림 / validate=엔티티와 실제 테이블이 맞는지 검사 / create=새로 생성)
